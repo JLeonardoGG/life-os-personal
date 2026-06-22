@@ -31,3 +31,21 @@ FastAPI escuchara exclusivamente en `127.0.0.1`. No se habilitara CORS abierto n
 ## Automatizaciones
 
 n8n usara una API key local. Ollama permanecera desactivado por defecto. Ninguna integracion externa se ejecutara sin habilitacion explicita posterior.
+
+## Escritura financiera
+
+Los montos se guardan como centavos enteros en SQLite. Las eliminaciones de transacciones,
+presupuestos, suscripciones, deudas e inversiones usan `deleted_at`; no se borran fisicamente.
+Los errores de API no disparan una segunda escritura silenciosa en localStorage.
+
+Los reportes de paridad muestran solo conteos y totales agregados. No imprimen descripciones,
+instituciones, numeros de cuenta ni payloads financieros completos en consola.
+
+## Salud y coche
+
+Los registros de salud se limitan a habitos, medidas y bienestar capturados por el usuario.
+Life OS no genera diagnosticos ni tratamientos. Las fechas se almacenan en UTC y se presentan
+en `America/Mexico_City`.
+
+Las auditorias de Salud/Coche guardan tipo de entidad, accion, resultado e idempotencia. No
+guardan notas, comidas, medidas corporales, placas ni payloads completos en `automation_logs`.

@@ -18,7 +18,11 @@ def test_transaction_crud_and_summary(client):
         "name": "Gasolina demo",
         "amount": 180.5,
     }
-    created = client.post("/api/transactions", json=payload)
+    created = client.post(
+        "/api/transactions",
+        json=payload,
+        headers={"Idempotency-Key": "transaction-crud-demo"},
+    )
     assert created.status_code == 201
     record = created.json()
     assert record["amount"] == 180.5

@@ -2,7 +2,7 @@
   "name": "LifeOS Personal",
   "short_name": "LifeOS",
   "description": "Dashboard personal para finanzas, SAT, rutina, pendientes, cuentas y progreso local.",
-  "start_url": "./lifeos_dashboard.html?v=v27-local-backend",
+  "start_url": "./lifeos_dashboard.html?v=v31-health-car-sqlite",
   "scope": "./",
   "display": "standalone",
   "background_color": "#07111f",

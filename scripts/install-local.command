@@ -16,4 +16,4 @@ if command -v "$PNPM" >/dev/null 2>&1; then
 fi
 
 .venv/bin/lifeos-install
-open "http://127.0.0.1:8765/lifeos_dashboard.html?v=v27-local-backend"
+open "http://127.0.0.1:8765/lifeos_dashboard.html?v=v30-finance-sqlite-write"

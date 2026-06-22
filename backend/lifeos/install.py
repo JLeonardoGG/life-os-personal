@@ -50,7 +50,7 @@ def install_launch_agent(load: bool = True) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("wb") as handle:
         plistlib.dump(build_launch_agent(), handle, sort_keys=True)
-    path.chmod(0o600)
+    path.chmod(0o644)
     if load:
         domain = f"gui/{os.getuid()}"
         subprocess.run(["launchctl", "bootout", domain, str(path)], check=False, capture_output=True)

@@ -62,8 +62,18 @@ class Transaction(RecordMixin, Base):
     expense_nature: Mapped[str] = mapped_column(String(30), default="")
     source: Mapped[str] = mapped_column(String(40), default="manual")
     source_hash: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(160), unique=True, nullable=True)
     account_id: Mapped[str | None] = mapped_column(ForeignKey("accounts.id"), nullable=True)
     details: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
+
+
+class TransactionRevision(RecordMixin, Base):
+    __tablename__ = "transaction_revisions"
+
+    transaction_id: Mapped[str] = mapped_column(ForeignKey("transactions.id"), index=True)
+    action: Mapped[str] = mapped_column(String(20))
+    idempotency_key: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
 class Budget(RecordMixin, Base):
@@ -117,7 +127,12 @@ class Debt(RecordMixin, Base):
 
     entity: Mapped[str] = mapped_column(String(180), index=True)
     direction: Mapped[str] = mapped_column(String(20), default="owed")
+    initial_amount_cents: Mapped[int] = mapped_column(Integer, default=0)
     current_amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    minimum_payment_cents: Mapped[int] = mapped_column(Integer, default=0)
+    institution: Mapped[str] = mapped_column(String(160), default="")
+    debt_type: Mapped[str] = mapped_column(String(60), default="other")
+    interest_rate_bps: Mapped[int] = mapped_column(Integer, default=0)
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="active")
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -219,6 +234,11 @@ class Routine(RecordMixin, Base):
     name: Mapped[str] = mapped_column(String(180))
     schedule: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(160),
+        unique=True,
+        nullable=True,
+    )
     details: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
 
 
@@ -230,6 +250,11 @@ class HealthLog(RecordMixin, Base):
     value: Mapped[float | None] = mapped_column(nullable=True)
     unit: Mapped[str] = mapped_column(String(30), default="")
     notes: Mapped[str] = mapped_column(Text, default="")
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(160),
+        unique=True,
+        nullable=True,
+    )
     details: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
 
 
@@ -241,6 +266,11 @@ class CarLog(RecordMixin, Base):
     odometer_km: Mapped[int | None] = mapped_column(Integer, nullable=True)
     amount_cents: Mapped[int] = mapped_column(Integer, default=0)
     description: Mapped[str] = mapped_column(Text, default="")
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(160),
+        unique=True,
+        nullable=True,
+    )
     details: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
 
 
@@ -253,6 +283,11 @@ class CarReminder(RecordMixin, Base):
     due_odometer_km: Mapped[int | None] = mapped_column(Integer, nullable=True)
     recurrence: Mapped[str] = mapped_column(String(40), default="none")
     status: Mapped[str] = mapped_column(String(30), default="pending")
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(160),
+        unique=True,
+        nullable=True,
+    )
     details: Mapped[dict[str, Any]] = mapped_column("metadata", JSON, default=dict)
 
 

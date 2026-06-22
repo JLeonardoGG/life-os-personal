@@ -8,10 +8,10 @@
     <meta name="apple-mobile-web-app-title" content="LifeOS">
     <link rel="manifest" href="manifest.webmanifest">
     <title>LifeOS - Dashboard Personal</title>
-    
+
     <!-- CSS local compilado -->
     <link rel="stylesheet" href="./frontend/assets/app.css">
-    
+
     <!-- Chart.js para las gráficas -->
     <script src="./frontend/assets/vendor/chart.js"></script>
 
@@ -21,15 +21,15 @@
     <!-- Lectores locales para estados de cuenta PDF/Excel -->
     <script src="./frontend/assets/vendor/pdf.min.js"></script>
     <script src="./frontend/assets/vendor/xlsx.full.min.js"></script>
-    
+
     <!-- FontAwesome para los íconos -->
     <link rel="stylesheet" href="./frontend/assets/vendor/fontawesome/css/all.min.css">
-    
+
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; overflow: hidden; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -37,14 +37,14 @@
 
         .page-section { display: none; animation: fadeIn 0.3s ease-in-out; height: 100%; overflow-y: auto; padding-bottom: 40px;}
         .page-section.active { display: block; }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-        
+
         /* Routine Grid Styling */
         .routine-grid { display: grid; grid-template-columns: 80px repeat(7, 1fr); gap: 1px; background-color: #e2e8f0; }
         .routine-header, .routine-cell { background-color: white; padding: 10px; text-align: center; font-size: 0.85rem;}
@@ -568,7 +568,7 @@
                 <i class="fa-solid fa-bars text-xl"></i>
             </button>
         </div>
-        
+
         <div id="mobile-menu" class="hidden md:flex flex-col flex-1 overflow-y-auto custom-scroll p-4 space-y-1 absolute md:relative top-16 md:top-0 left-0 w-full md:w-auto bg-white border-b md:border-0 z-10 shadow-lg md:shadow-none">
             <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-2">Finanzas</div>
             <button onclick="navigate('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-left text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors bg-slate-100 text-primary font-medium" data-target="dashboard">
@@ -598,19 +598,27 @@
             <button onclick="navigate('settings')" class="nav-btn w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-left text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors" data-target="settings">
                 <i class="fa-solid fa-gear w-5 text-center"></i> <span>Opciones</span>
             </button>
+            <div id="lifeos-backend-indicator" class="mx-4 mb-3 rounded-lg border border-slate-600 bg-slate-800/70 px-3 py-2 text-xs text-slate-300">
+                <div class="flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                    <span class="font-semibold">Comprobando backend</span>
+                </div>
+                <p class="mt-1 text-[10px] opacity-75">Fuente pendiente</p>
+            </div>
         </div>
     </nav>
 
     <!-- Main Content -->
     <main class="flex-1 overflow-hidden relative">
         <div class="absolute inset-0 overflow-y-auto custom-scroll p-4 md:p-8">
-            
+
             <!-- ==================== DASHBOARD SECTION ==================== -->
             <section id="dashboard" class="page-section active max-w-7xl mx-auto">
                 <header class="flex justify-between items-end mb-8">
                     <div>
                         <h2 class="text-3xl font-bold text-slate-800">Resumen General</h2>
                         <p class="text-slate-500 mt-1" id="date-display">Cargando fecha...</p>
+                        <span id="dashboard-data-source" class="dark-chip rounded-full px-3 py-1 text-xs text-slate-400 inline-block mt-2">Fuente pendiente</span>
                     </div>
                     <!-- Traffic Light -->
                     <div class="flex items-center space-x-3 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
@@ -623,6 +631,8 @@
                         <span id="tl-status" class="text-xs font-bold text-emerald-600 uppercase ml-2">Control</span>
                     </div>
                 </header>
+
+                <div id="dashboard-api-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5"></div>
 
                 <!-- Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -787,11 +797,17 @@
             <section id="debts" class="page-section max-w-7xl mx-auto">
                 <div class="flex flex-col lg:flex-row justify-between lg:items-end gap-4 mb-6">
                     <div>
-                        <h2 class="text-3xl font-bold text-slate-800">Finanzas</h2>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h2 class="text-3xl font-bold text-slate-800">Finanzas</h2>
+                            <span id="finance-data-source" class="dark-chip rounded-full px-3 py-1 text-xs text-slate-400">Fuente pendiente</span>
+                        </div>
                         <p class="text-slate-500 mt-1">Cuentas por pagar/cobrar, ingresos, gastos y presupuesto del mes.</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <input id="finance-period" type="month" class="border border-slate-300 rounded-lg px-3 py-2 text-sm" onchange="renderDebts()">
+                        <button onclick="verifyFinanceParity()" class="bg-slate-100 text-slate-700 py-2 px-3 rounded-lg text-sm font-medium hover:bg-slate-200">
+                            <i class="fa-solid fa-scale-balanced mr-1"></i> Verificar paridad
+                        </button>
                         <button onclick="exportFinanceMonthCsv()" class="bg-emerald-500 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-emerald-600">
                             <i class="fa-solid fa-file-csv mr-1"></i> CSV
                         </button>
@@ -800,7 +816,8 @@
                         </button>
                     </div>
                 </div>
-                
+                <div id="finance-parity-report" class="hidden dark-panel rounded-xl p-4 mb-6"></div>
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl border border-red-200">
                         <div class="flex justify-between items-center mb-4">
@@ -812,7 +829,7 @@
                             + Agregar Deuda
                         </button>
                     </div>
-                    
+
                     <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-lg font-bold text-emerald-800">Lo que me deben</h3>
@@ -1109,7 +1126,7 @@
             <!-- ==================== INVESTMENTS SECTION ==================== -->
             <section id="investments" class="page-section max-w-7xl mx-auto">
                 <h2 class="text-3xl font-bold text-slate-800 mb-6">Fondos e Inversiones</h2>
-                
+
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     <!-- Form -->
                     <div class="glass-card rounded-2xl p-6 shadow-sm lg:col-span-1 h-fit">
@@ -1453,7 +1470,10 @@ Cardio 20 min..."></textarea>
 
             <!-- ==================== TODOS ==================== -->
             <section id="todos" class="page-section max-w-3xl mx-auto">
-                <h2 class="text-3xl font-bold text-slate-800 mb-6">Pendientes</h2>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                    <h2 class="text-3xl font-bold text-slate-800">Pendientes</h2>
+                    <span id="todos-data-source" class="dark-chip rounded-full px-3 py-1 text-xs text-slate-400">Fuente pendiente</span>
+                </div>
                 <div class="bg-white p-6 rounded-xl border border-slate-200">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
                         <input type="text" id="todo-input" placeholder="Nuevo pendiente..." class="md:col-span-2 border border-slate-300 rounded-lg p-3 focus:ring-primary outline-none">
@@ -1585,6 +1605,20 @@ Cardio 20 min..."></textarea>
                         </div>
                         <p id="v1-backend-status" class="text-sm text-slate-500">Comprobando backend local...</p>
                         <pre id="v1-migration-result" class="hidden max-h-64 overflow-auto rounded-lg bg-slate-950 text-slate-200 p-4 text-xs whitespace-pre-wrap"></pre>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 space-y-4 lg:col-span-2">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h4 class="font-bold text-slate-800">Escritura financiera experimental</h4>
+                                <p class="text-sm text-slate-500 mt-1">Activa altas, cambios y borrado lógico de movimientos directamente en SQLite.</p>
+                            </div>
+                            <label class="inline-flex items-center gap-3 cursor-pointer">
+                                <input id="finance-api-write-toggle" type="checkbox" class="w-5 h-5 accent-primary" onchange="toggleFinanceApiWrites(this.checked)">
+                                <span class="text-sm font-semibold">Usar API</span>
+                            </label>
+                        </div>
+                        <p id="finance-api-write-status" class="text-sm text-yellow-600">Desactivada. La lectura API continúa funcionando.</p>
                     </div>
 
                     <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 space-y-4">
@@ -1819,7 +1853,7 @@ Cardio 20 min..."></textarea>
     <script type="module" src="./frontend/js/core/bootstrap.js"></script>
     <script>
         // ================= STATE & MOCK DATA =================
-        const LIFEOS_APP_VERSION = 'v27-local-backend';
+        const LIFEOS_APP_VERSION = 'v31-health-car-sqlite';
         const defaultState = {
             config: { targetIncome: 5000, targetExpense: 3000, pinHash: null, lastBackupAt: null },
             finance: {
@@ -1969,6 +2003,240 @@ Cardio 20 min..."></textarea>
         };
 
         let state = JSON.parse(JSON.stringify(defaultState));
+        const frontendApiCache = {
+            tasks: null,
+            events: null,
+            transactions: null,
+            budgets: null,
+            subscriptions: null,
+            debtLedger: null,
+            investments: null,
+            healthLogs: null,
+            routines: null,
+            car: null
+        };
+
+        function apiDomainActive(domain) {
+            return window.lifeOSDataProvider?.getDomainSource(domain) === 'api';
+        }
+        function visibleTodos() {
+            return apiDomainActive('tasks') && Array.isArray(frontendApiCache.tasks)
+                ? frontendApiCache.tasks
+                : state.todos;
+        }
+        function visibleCalendarEvents() {
+            return apiDomainActive('events') && Array.isArray(frontendApiCache.events)
+                ? frontendApiCache.events
+                : state.calendar.events;
+        }
+        function visibleMovements() {
+            return apiDomainActive('transactions') && Array.isArray(frontendApiCache.transactions)
+                ? frontendApiCache.transactions
+                : state.movements;
+        }
+        function visibleSubscriptions() {
+            return apiDomainActive('subscriptions') && Array.isArray(frontendApiCache.subscriptions)
+                ? frontendApiCache.subscriptions
+                : state.finance.subscriptions;
+        }
+        function visibleDebtLedger() {
+            return apiDomainActive('debts') && frontendApiCache.debtLedger
+                ? frontendApiCache.debtLedger
+                : ensureDebtLedger();
+        }
+        function visibleInvestments() {
+            return apiDomainActive('investments') && Array.isArray(frontendApiCache.investments)
+                ? frontendApiCache.investments
+                : state.investments;
+        }
+        function visibleHealthLogs() {
+            return apiDomainActive('health') && Array.isArray(frontendApiCache.healthLogs)
+                ? frontendApiCache.healthLogs
+                : null;
+        }
+        function visibleHealthState() {
+            const logs = visibleHealthLogs();
+            if (!logs) return state.health;
+            const daily = [...logs]
+                .filter(item => item.logType === 'daily_health')
+                .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')))
+                .at(-1);
+            const health = cloneData(defaultState.health);
+            ['calories', 'water', 'activity', 'macros', 'goals'].forEach(key => {
+                if (daily?.[key]) health[key] = cloneData(daily[key]);
+            });
+            health.bodyRecords = logs.filter(item => item.logType === 'body');
+            health.meals = logs.filter(item => item.logType === 'meal');
+            return health;
+        }
+        function visibleWellbeingState() {
+            const logs = visibleHealthLogs();
+            return logs
+                ? { logs: logs.filter(item => item.logType === 'wellbeing') }
+                : state.wellbeing;
+        }
+        function visibleRoutineRecords() {
+            return apiDomainActive('routines') && Array.isArray(frontendApiCache.routines)
+                ? frontendApiCache.routines
+                : null;
+        }
+        function visibleRoutineSchedule() {
+            const records = visibleRoutineRecords();
+            return records
+                ? records.filter(item => item.routineType === 'schedule')
+                : state.routine;
+        }
+        function visibleFitnessState() {
+            const records = visibleRoutineRecords();
+            return records
+                ? {
+                    gym: records.filter(item => item.routineType === 'gym'),
+                    cardio: records.filter(item => item.routineType === 'cardio')
+                }
+                : state.fitness;
+        }
+        function visibleSkincareState() {
+            const records = visibleRoutineRecords();
+            if (!records) return state.skincare;
+            const routine = records.find(item => item.routineType === 'skincare');
+            return routine
+                ? {
+                    morning: routine.morning || routine.schedule?.morning || [],
+                    night: routine.night || routine.schedule?.night || [],
+                    completions: routine.completions || {}
+                }
+                : cloneData(defaultState.skincare);
+        }
+        function visibleRoutinePrintNotes() {
+            const records = visibleRoutineRecords();
+            if (!records) return state.routinePrintNotes;
+            const habits = records.find(item => item.routineType === 'health_habits');
+            return habits?.routinePrintNotes || cloneData(defaultState.routinePrintNotes);
+        }
+        function visibleVehicleState() {
+            if (!apiDomainActive('car') || !frontendApiCache.car) return state.vehicle;
+            const bundle = frontendApiCache.car;
+            const vehicle = cloneData(defaultState.vehicle);
+            vehicle.profile = mergeDefaults(
+                cloneData(bundle.summary?.profile || {}),
+                cloneData(defaultState.vehicle.profile)
+            );
+            vehicle.kmLogs = (bundle.logs || []).filter(item => item.logType === 'odometer');
+            vehicle.services = (bundle.logs || []).filter(item => item.logType === 'service');
+            vehicle.maintenanceLogs = (bundle.logs || []).filter(item => item.logType === 'maintenance');
+            (bundle.reminders || []).forEach(reminder => {
+                const key = reminder.reminderType;
+                if (vehicle.obligations[key]) {
+                    vehicle.obligations[key] = {
+                        ...vehicle.obligations[key],
+                        ...reminder
+                    };
+                }
+            });
+            return vehicle;
+        }
+        function healthWritesReadOnly() {
+            return apiDomainActive('health')
+                && !window.LIFE_OS_HEALTH_CAR_WRITE_FLAGS?.useApiForHealthWrites;
+        }
+        function routineWritesReadOnly() {
+            return apiDomainActive('routines')
+                && !window.LIFE_OS_HEALTH_CAR_WRITE_FLAGS?.useApiForRoutineWrites;
+        }
+        function carWritesReadOnly() {
+            return apiDomainActive('car')
+                && !window.LIFE_OS_HEALTH_CAR_WRITE_FLAGS?.useApiForCarWrites;
+        }
+        function guardHealthWrite() {
+            if (!healthWritesReadOnly()) return true;
+            alert('Salud está leyendo desde SQLite en modo de validación. Activa la escritura experimental solo después de verificar paridad.');
+            return false;
+        }
+        function guardRoutineWrite() {
+            if (!routineWritesReadOnly()) return true;
+            alert('Rutinas está leyendo desde SQLite en modo de validación. La escritura API sigue desactivada.');
+            return false;
+        }
+        function guardCarWrite() {
+            if (!carWritesReadOnly()) return true;
+            alert('Coche está leyendo desde SQLite en modo de validación. La escritura API sigue desactivada.');
+            return false;
+        }
+        async function persistDailyHealth(nextHealth) {
+            const provider = window.lifeOSDataProvider?.health;
+            if (!provider || !apiDomainActive('health')) {
+                state.health = nextHealth;
+                saveData();
+                return;
+            }
+            const existing = (frontendApiCache.healthLogs || [])
+                .filter(item => item.logType === 'daily_health')
+                .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')))
+                .at(-1);
+            const payload = {
+                ...(existing || {}),
+                ...nextHealth,
+                logType: 'daily_health',
+                date: todayKey()
+            };
+            const result = existing
+                ? await provider.updateHealthLog(existing.id, payload)
+                : await provider.createHealthLog(payload);
+            if (result.source === 'api') upsertApiCache('healthLogs', result.data);
+        }
+        async function persistSkincare(nextSkincare) {
+            const provider = window.lifeOSDataProvider?.routines;
+            if (!provider || !apiDomainActive('routines')) {
+                state.skincare = nextSkincare;
+                saveData();
+                return;
+            }
+            const existing = (frontendApiCache.routines || [])
+                .find(item => item.routineType === 'skincare');
+            const payload = {
+                ...(existing || {}),
+                ...nextSkincare,
+                routineType: 'skincare',
+                name: 'Skincare',
+                schedule: {
+                    morning: nextSkincare.morning,
+                    night: nextSkincare.night
+                },
+                completions: nextSkincare.completions
+            };
+            const result = existing
+                ? await provider.updateRoutine(existing.id, payload)
+                : await provider.createRoutine(payload);
+            if (result.source === 'api') upsertApiCache('routines', result.data);
+        }
+        async function persistRoutineNotes(nextNotes) {
+            const provider = window.lifeOSDataProvider?.routines;
+            if (!provider || !apiDomainActive('routines')) {
+                state.routinePrintNotes = nextNotes;
+                saveData();
+                return;
+            }
+            const existing = (frontendApiCache.routines || [])
+                .find(item => item.routineType === 'health_habits');
+            const payload = {
+                ...(existing || {}),
+                routineType: 'health_habits',
+                name: 'Hábitos de salud',
+                routinePrintNotes: nextNotes,
+                schedule: {}
+            };
+            const result = existing
+                ? await provider.updateRoutine(existing.id, payload)
+                : await provider.createRoutine(payload);
+            if (result.source === 'api') upsertApiCache('routines', result.data);
+        }
+        function upsertApiCache(domain, item) {
+            const records = Array.isArray(frontendApiCache[domain]) ? frontendApiCache[domain] : [];
+            frontendApiCache[domain] = [
+                ...records.filter(record => String(record.id) !== String(item.id)),
+                item
+            ];
+        }
 
         function cloneData(value) {
             return JSON.parse(JSON.stringify(value));
@@ -2162,8 +2430,7 @@ Cardio 20 min..."></textarea>
             return state.debtLedger;
         }
         function findDebtEntityById(entityId) {
-            ensureDebtLedger();
-            return state.debtLedger.entities.find(entity => String(entity.id) === String(entityId));
+            return visibleDebtLedger().entities.find(entity => String(entity.id) === String(entityId));
         }
         function ensureDebtEntity(name) {
             const cleanName = String(name || '').trim() || 'Sin entidad';
@@ -2217,7 +2484,7 @@ Cardio 20 min..."></textarea>
         }
         function getDebtLedgerSummary() {
             migrateDebtLedgerState();
-            const ledger = ensureDebtLedger();
+            const ledger = visibleDebtLedger();
             const transactionsByEntity = {};
             ledger.transactions.forEach(transaction => {
                 transactionsByEntity[transaction.entityId] = transactionsByEntity[transaction.entityId] || [];
@@ -2225,7 +2492,10 @@ Cardio 20 min..."></textarea>
             });
             const entities = ledger.entities.map(entity => {
                 const transactions = transactionsByEntity[entity.id] || [];
-                const balance = transactions.reduce((sum, transaction) => sum + debtTransactionEffect(transaction), 0);
+                const calculatedBalance = transactions.reduce((sum, transaction) => sum + debtTransactionEffect(transaction), 0);
+                const balance = entity.dataSource === 'api'
+                    ? (entity.direction === 'receivable' ? 1 : -1) * Number(entity.currentAmount || 0)
+                    : calculatedBalance;
                 const lastTransaction = [...transactions].sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id)))[0] || null;
                 return { ...entity, balance, transactions, lastTransaction };
             }).sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance) || a.name.localeCompare(b.name));
@@ -2420,7 +2690,7 @@ Cardio 20 min..."></textarea>
                 if (document.getElementById('health')?.classList.contains('active')) renderProgressPhotos();
             });
             setupPwa();
-            
+
             // Set current date string
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('date-display').textContent = new Date().toLocaleDateString('es-ES', options);
@@ -2462,7 +2732,7 @@ Cardio 20 min..."></textarea>
                 const el = document.getElementById(id);
                 if (el) el.value = todayKey();
             });
-            
+
             const financePeriod = document.getElementById('finance-period');
             if (financePeriod) financePeriod.value = todayKey().slice(0, 7);
 
@@ -2472,6 +2742,7 @@ Cardio 20 min..."></textarea>
             updatePinSettingsStatus();
 
             renderDashboard();
+            primeFrontendApiBridge();
             const requestedSection = new URLSearchParams(window.location.search).get('section') || window.location.hash.replace('#', '');
             const lastSection = localStorage.getItem('lifeos_last_section') || '';
             const initialSection = document.getElementById(requestedSection) ? requestedSection : document.getElementById(lastSection) ? lastSection : 'dashboard';
@@ -2486,7 +2757,7 @@ Cardio 20 min..."></textarea>
             localStorage.setItem('lifeos_last_section', sectionId);
             document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
-            
+
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('bg-slate-100', 'text-primary', 'font-medium');
                 btn.classList.add('text-slate-600');
@@ -2503,7 +2774,10 @@ Cardio 20 min..."></textarea>
             if(sectionId === 'debts') renderDebts();
             if(sectionId === 'investments') renderInvestments();
             if(sectionId === 'tax') renderTax();
-            if(sectionId === 'routine') renderRoutine();
+            if(sectionId === 'routine') { renderRoutine(); renderFitnessRoutine(); }
+            if(sectionId === 'health') { renderHealth(); renderSkincare(); }
+            if(sectionId === 'wellbeing') renderWellbeing();
+            if(sectionId === 'vehicle') renderVehicle();
             if(sectionId === 'todos') renderTodos();
             if(sectionId === 'settings') renderSettings();
         }
@@ -2554,7 +2828,8 @@ Cardio 20 min..."></textarea>
             ensureGoalsConfig();
             const today = todayKey();
             const monthKey = today.slice(0, 7);
-            const monthMovs = state.movements.filter(m => String(m.date || '').startsWith(monthKey));
+            const movements = visibleMovements();
+            const monthMovs = movements.filter(m => String(m.date || '').startsWith(monthKey));
             const financeMonth = getFinanceMonthSummary(monthKey);
             const income = monthMovs.filter(m => m.type === 'ingreso').reduce((sum, m) => sum + Number(m.amount || 0), 0);
             const expense = monthMovs.filter(m => m.type === 'gasto').reduce((sum, m) => sum + Number(m.amount || 0), 0);
@@ -2562,8 +2837,8 @@ Cardio 20 min..."></textarea>
             const totalDebt = debtSummary.totalDebt;
             const totalReceivable = debtSummary.totalReceivable;
             const netDebt = debtSummary.netDebt;
-            const investments = state.investments.reduce((sum, i) => sum + Number(i.amount || 0), 0);
-            const savings = state.movements.reduce((sum, m) => sum + (m.type === 'ingreso' ? Number(m.amount || 0) : -Number(m.amount || 0)), 0);
+            const investments = visibleInvestments().reduce((sum, i) => sum + Number(i.amount || 0), 0);
+            const savings = movements.reduce((sum, m) => sum + (m.type === 'ingreso' ? Number(m.amount || 0) : -Number(m.amount || 0)), 0);
             const categoryExpenses = {};
             const expenseNature = { fijo: 0, corriente: 0, variable: 0 };
             monthMovs.filter(m => m.type === 'gasto').forEach(m => {
@@ -2729,7 +3004,7 @@ Cardio 20 min..."></textarea>
         }
         function getLifeOSAssessment() {
             const finance = getFinancialScore();
-            const monthMovs = state.movements.filter(m => String(m.date || '').startsWith(todayKey().slice(0, 7)));
+            const monthMovs = visibleMovements().filter(m => String(m.date || '').startsWith(todayKey().slice(0, 7)));
             const routine = getRoutineCoachAssessment();
             const taxPending = getTaxPendingCount(todayKey().slice(0, 7));
             const cards = [
@@ -2971,7 +3246,7 @@ Cardio 20 min..."></textarea>
         function getHealthGoalInsights() {
             const records = sortedBodyRecords();
             const latest = records[records.length - 1];
-            const goal = state.health.goals || {};
+            const goal = visibleHealthState().goals || {};
             const target = Number(goal.targetWeight || 0);
             const weeks = weeksUntilDate(goal.targetDate);
             const insights = [];
@@ -3022,7 +3297,7 @@ Cardio 20 min..."></textarea>
         function getRoutineItemsForDate(date = new Date()) {
             const day = routineDayFromDate(date);
             const dateKey = dateKeyFromDate(date);
-            return (state.routine || [])
+            return (visibleRoutineSchedule() || [])
                 .filter(item => item.day === day)
                 .map(item => ({ ...item, date: dateKey, startsAt: dateWithTime(dateKey, item.time) }))
                 .sort((a, b) => minutesFromTime(a.time) - minutesFromTime(b.time));
@@ -3187,9 +3462,32 @@ Cardio 20 min..."></textarea>
         }
 
         // ================= DASHBOARD =================
+        let dashboardSummaryRequest = 0;
+        async function refreshDashboardSummaryBridge() {
+            const requestId = ++dashboardSummaryRequest;
+            const bridge = window.lifeOSDashboardBridge;
+            if (!bridge) return;
+            try {
+                const result = await bridge.load(state);
+                if (requestId !== dashboardSummaryRequest) return;
+                bridge.render(result);
+                if (result.month?.finance && mainChartInst) {
+                    mainChartInst.data.datasets[0].data = [Number(result.month.finance.income || 0)];
+                    mainChartInst.data.datasets[1].data = [Number(result.month.finance.expense || 0)];
+                    mainChartInst.update();
+                }
+            } catch (error) {
+                console.warn('[LifeOS Dashboard] Resumen API no disponible; se conserva el cálculo local.', {
+                    code: error.code || 'SUMMARY_BRIDGE_ERROR'
+                });
+            }
+        }
+
         function renderDashboard() {
-            const tAhorros = state.movements.reduce((acc, curr) => acc + (curr.type === 'ingreso' ? curr.amount : -curr.amount), 0);
-            const tInversiones = state.investments.reduce((acc, curr) => acc + curr.amount, 0);
+            const movements = visibleMovements();
+            const tAhorros = movements.reduce((acc, curr) => acc + (curr.type === 'ingreso' ? curr.amount : -curr.amount), 0);
+            const investments = visibleInvestments();
+            const tInversiones = investments.reduce((acc, curr) => acc + curr.amount, 0);
             const debtSummary = getDebtLedgerSummary();
             const tDeudas = debtSummary.totalDebt;
 
@@ -3200,7 +3498,7 @@ Cardio 20 min..."></textarea>
             // Current Month Logic
             const currMStr = (new Date().getMonth() + 1).toString().padStart(2, '0');
             const currYStr = new Date().getFullYear().toString();
-            const monthMovs = state.movements.filter(m => m.date.startsWith(`${currYStr}-${currMStr}`));
+            const monthMovs = movements.filter(m => m.date.startsWith(`${currYStr}-${currMStr}`));
             const mInc = monthMovs.filter(m => m.type === 'ingreso').reduce((a,b)=>a+b.amount,0);
             const mExp = monthMovs.filter(m => m.type === 'gasto').reduce((a,b)=>a+b.amount,0);
             const red = document.getElementById('tl-red'), yellow = document.getElementById('tl-yellow'), green = document.getElementById('tl-green');
@@ -3234,7 +3532,7 @@ Cardio 20 min..."></textarea>
 
             // Inv Chart
             const invData = {};
-            state.investments.forEach(i => invData[i.type] = (invData[i.type]||0) + i.amount);
+            investments.forEach(i => invData[i.type] = (invData[i.type]||0) + i.amount);
             const ctxInv = document.getElementById('dashInvestChart').getContext('2d');
             if(dashInvestChartInst) dashInvestChartInst.destroy();
             dashInvestChartInst = new Chart(ctxInv, {
@@ -3247,6 +3545,7 @@ Cardio 20 min..."></textarea>
             renderWeeklySummary();
             renderAlertCenter();
             renderVehicleServiceRecommendations();
+            refreshDashboardSummaryBridge();
         }
 
         function renderWeeklySummary() {
@@ -3260,17 +3559,18 @@ Cardio 20 min..."></textarea>
             const startKey = dateKeyFromDate(start);
             document.getElementById('weekly-summary-subtitle').textContent = `${formatDateLabel(startKey)} - ${formatDateLabel(today)}`;
 
-            const weeklyMovs = state.movements.filter(m => m.date >= startKey && m.date <= today);
+            const weeklyMovs = visibleMovements().filter(m => m.date >= startKey && m.date <= today);
             const weekIncome = weeklyMovs.filter(m => m.type === 'ingreso').reduce((sum, m) => sum + m.amount, 0);
             const weekExpense = weeklyMovs.filter(m => m.type === 'gasto').reduce((sum, m) => sum + m.amount, 0);
-            const todosDone = state.todos.filter(t => t.done).length;
-            const todosTotal = state.todos.length;
+            const todosDone = visibleTodos().filter(t => t.done).length;
+            const todosTotal = visibleTodos().length;
             const currentTaxPeriod = today.slice(0, 7);
             const taxTotals = getTaxPeriodTotals(currentTaxPeriod);
             const taxPending = getTaxPendingCount(currentTaxPeriod);
             const debtSummary = getDebtLedgerSummary();
             const financeScore = getFinancialScore();
-            const investmentsTotal = state.investments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+            const investments = visibleInvestments();
+            const investmentsTotal = investments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
             const routineItems = getRoutineItemsForDate(new Date());
             const currentRoutine = getCurrentRoutineActivity(new Date());
             const backupAge = state.config.lastBackupAt ? daysBetween(state.config.lastBackupAt, today) : null;
@@ -3315,7 +3615,7 @@ Cardio 20 min..."></textarea>
                     icon: 'fa-chart-line',
                     title: 'Inversiones',
                     value: formatCurrency(investmentsTotal),
-                    hint: state.investments.length ? `${state.investments.length} registro(s)` : 'Sin inversiones capturadas',
+                    hint: investments.length ? `${investments.length} registro(s)` : 'Sin inversiones capturadas',
                     color: investmentsTotal > 0 ? 'text-emerald-500' : 'text-slate-500'
                 },
                 {
@@ -3445,7 +3745,7 @@ Cardio 20 min..."></textarea>
             if (!container) return;
             ensureVehicle();
             const serviceAlert = getVehicleServiceAlert();
-            const p = state.vehicle.profile || {};
+            const p = visibleVehicleState().profile || {};
             const currentKm = getCurrentVehicleKm();
             const order = { urgent: 0, warning: 1, info: 2, ok: 3 };
             const maintenance = VEHICLE_MAINTENANCE_ITEMS
@@ -3572,7 +3872,7 @@ Cardio 20 min..."></textarea>
             return dateKeyFromDate(date).slice(0, 7);
         }
         function financeMovementsForPeriod(period) {
-            return state.movements.filter(movement => monthKeyFromDate(movement.date) === period);
+            return visibleMovements().filter(movement => monthKeyFromDate(movement.date) === period);
         }
         function statementProviderMeta(providerKey) {
             return FINANCE_STATEMENT_PROVIDERS[providerKey] || FINANCE_STATEMENT_PROVIDERS.other;
@@ -3698,7 +3998,7 @@ Cardio 20 min..."></textarea>
             }
             const inferred = inferStatementCategory(cleanDescription, provider, finalDirection);
             const sourceHash = statementHash(`${providerKey}|${date}|${absAmount.toFixed(2)}|${cleanDescription}`);
-            const duplicate = state.movements.some(movement => String(movement.sourceHash || '') === sourceHash)
+            const duplicate = visibleMovements().some(movement => String(movement.sourceHash || '') === sourceHash)
                 || (state.finance.statementImports?.pending || []).some(item => String(item.sourceHash || '') === sourceHash);
             return {
                 id: `pending-${Date.now()}-${rowIndex}-${Math.random().toString(16).slice(2)}`,
@@ -3892,6 +4192,7 @@ Cardio 20 min..."></textarea>
         }
         function confirmStatementMovements() {
             ensureFinance();
+            if (!guardFinanceTransactionWrite()) return;
             const pending = state.finance.statementImports.pending || [];
             const selected = pending.filter(item => item.selected && !item.duplicate);
             if (!selected.length) return alert('No hay movimientos seleccionados para agregar.');
@@ -3899,6 +4200,7 @@ Cardio 20 min..."></textarea>
             if (closedPeriods.length) return alert(`No puedo agregar movimientos porque estos meses están cerrados: ${closedPeriods.join(', ')}.`);
             const now = Date.now();
             selected.forEach((item, index) => {
+                // LEGACY_LOCALSTORAGE_FALLBACK
                 state.movements.push({
                     id: now + index,
                     date: item.date,
@@ -3940,6 +4242,17 @@ Cardio 20 min..."></textarea>
         }
         function getMonthlyBudget(period = selectedFinancePeriod()) {
             ensureFinance();
+            if (apiDomainActive('budgets') && Array.isArray(frontendApiCache.budgets)) {
+                const apiBudget = frontendApiCache.budgets.find(item => item.period === period);
+                if (apiBudget) {
+                    const normalized = mergeDefaults(cloneData(apiBudget), defaultFinanceBudget(period));
+                    normalized.categoryLimits = mergeDefaults(
+                        normalized.categoryLimits || {},
+                        defaultFinanceBudget(period).categoryLimits
+                    );
+                    return normalized;
+                }
+            }
             state.finance.budgets[period] = mergeDefaults(state.finance.budgets[period] || {}, defaultFinanceBudget(period));
             state.finance.budgets[period].categoryLimits = mergeDefaults(state.finance.budgets[period].categoryLimits || {}, defaultFinanceBudget(period).categoryLimits);
             return state.finance.budgets[period];
@@ -3972,7 +4285,7 @@ Cardio 20 min..."></textarea>
             return `${period}-${String(day).padStart(2, '0')}`;
         }
         function subscriptionPaidForDue(subscription, dueDate) {
-            return state.movements.some(movement =>
+            return visibleMovements().some(movement =>
                 movement.type === 'gasto' &&
                 String(movement.subscriptionId || '') === String(subscription.id) &&
                 monthKeyFromDate(movement.date) === monthKeyFromDate(dueDate)
@@ -3980,7 +4293,7 @@ Cardio 20 min..."></textarea>
         }
         function getSubscriptionsForPeriod(period = selectedFinancePeriod()) {
             ensureFinance();
-            return state.finance.subscriptions
+            return visibleSubscriptions()
                 .map(subscription => {
                     const dueDate = getSubscriptionDueDate(subscription, period);
                     if (!dueDate) return null;
@@ -4027,19 +4340,37 @@ Cardio 20 min..."></textarea>
                 savingsProgress: savingsTarget > 0 ? (income - expense) / savingsTarget : null
             };
         }
-        function saveMonthlyBudget() {
+        async function saveMonthlyBudget() {
             const period = selectedFinancePeriod();
-            const budget = getMonthlyBudget(period);
-            budget.incomeTarget = readNumberInput('budget-income', budget.incomeTarget || 0);
-            budget.expenseLimit = readNumberInput('budget-expense', budget.expenseLimit || 0);
-            budget.savingsTarget = readNumberInput('budget-savings', budget.savingsTarget || 0);
+            const current = getMonthlyBudget(period);
+            const budget = {
+                ...current,
+                period,
+                incomeTarget: readNumberInput('budget-income', current.incomeTarget || 0),
+                expenseLimit: readNumberInput('budget-expense', current.expenseLimit || 0),
+                savingsTarget: readNumberInput('budget-savings', current.savingsTarget || 0),
+                categoryLimits: { ...(current.categoryLimits || {}) }
+            };
             budget.categoryLimits = budget.categoryLimits || {};
             FINANCE_BUDGET_CATEGORIES.forEach(category => {
                 budget.categoryLimits[category] = readNumberInput(`budget-cat-${category.replace(/[^a-zA-Z0-9]/g, '-')}`, Number(budget.categoryLimits[category] || 0));
             });
-            saveData();
-            renderMovements();
-            renderDashboard();
+            try {
+                const provider = window.lifeOSDataProvider?.budgets;
+                if (provider) {
+                    const result = await provider.saveBudget(budget, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.finance.budgets[period] = budget;
+                        saveData();
+                        return budget;
+                    });
+                    if (result.source === 'api') upsertApiCache('budgets', result.data);
+                }
+                await renderMovements();
+                renderDashboard();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el presupuesto en SQLite.');
+            }
         }
         function renderFinanceBudgetControl(period, movements) {
             const budget = getMonthlyBudget(period);
@@ -4161,11 +4492,12 @@ Cardio 20 min..."></textarea>
             const due = getSubscriptionsForPeriod(period);
             if (total) total.textContent = `Este mes: ${formatCurrency(due.reduce((sum, item) => sum + Number(item.amount || 0), 0))}`;
             if (!list) return;
-            if (!state.finance.subscriptions.length) {
+            const subscriptions = visibleSubscriptions();
+            if (!subscriptions.length) {
                 list.innerHTML = `<div class="dark-soft rounded-lg p-4 text-sm text-slate-500">Sin suscripciones registradas.</div>`;
                 return;
             }
-            list.innerHTML = state.finance.subscriptions.map(subscription => {
+            list.innerHTML = subscriptions.map(subscription => {
                 const dueDate = getSubscriptionDueDate(subscription, period);
                 const paid = dueDate ? subscriptionPaidForDue(subscription, dueDate) : false;
                 const overdue = dueDate && !paid && dueDate < todayKey();
@@ -4223,14 +4555,14 @@ Cardio 20 min..."></textarea>
             renderMovements();
             renderDashboard();
         }
-        function addSubscription() {
+        async function addSubscription() {
             ensureFinance();
             const name = readTextInput('subscription-name');
             const amount = readNumberInput('subscription-amount');
             const day = Math.min(31, Math.max(1, readNumberInput('subscription-day', 1)));
             const frequency = document.getElementById('subscription-frequency')?.value || 'monthly';
             if (!name || amount <= 0) return alert('Agrega servicio y monto válido.');
-            state.finance.subscriptions.push({
+            const item = {
                 id: Date.now(),
                 name,
                 amount,
@@ -4241,33 +4573,76 @@ Cardio 20 min..."></textarea>
                 paymentMethod: 'Tarjeta',
                 active: true,
                 notes: ''
-            });
-            saveData();
-            resetInputs(['subscription-name', 'subscription-amount', 'subscription-day']);
-            renderMovements();
-            renderDashboard();
+            };
+            try {
+                const provider = window.lifeOSDataProvider?.subscriptions;
+                if (provider) {
+                    const result = await provider.createSubscription(item, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.finance.subscriptions.push(item);
+                        saveData();
+                        return item;
+                    });
+                    if (result.source === 'api') upsertApiCache('subscriptions', result.data);
+                }
+                resetInputs(['subscription-name', 'subscription-amount', 'subscription-day']);
+                await renderMovements();
+                renderDashboard();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar la suscripción en SQLite.');
+            }
         }
-        function toggleSubscriptionActive(id) {
-            const item = state.finance.subscriptions.find(subscription => String(subscription.id) === String(id));
+        async function toggleSubscriptionActive(id) {
+            const item = visibleSubscriptions().find(subscription => String(subscription.id) === String(id));
             if (!item) return;
-            item.active = !item.active;
-            saveData();
-            renderMovements();
-            renderDashboard();
+            const next = { ...item, active: !item.active };
+            try {
+                const provider = window.lifeOSDataProvider?.subscriptions;
+                if (provider) {
+                    const result = await provider.updateSubscription(id, next, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        const local = state.finance.subscriptions.find(row => String(row.id) === String(id));
+                        if (local) Object.assign(local, next);
+                        saveData();
+                        return next;
+                    });
+                    if (result.source === 'api') upsertApiCache('subscriptions', result.data);
+                }
+                await renderMovements();
+                renderDashboard();
+            } catch (error) {
+                alert(error.message || 'No se pudo actualizar la suscripción.');
+            }
         }
-        function deleteSubscription(id) {
+        async function deleteSubscription(id) {
             if (!confirm('¿Eliminar esta suscripción? No borra movimientos ya registrados.')) return;
-            state.finance.subscriptions = state.finance.subscriptions.filter(subscription => String(subscription.id) !== String(id));
-            saveData();
-            renderMovements();
-            renderDashboard();
+            try {
+                const provider = window.lifeOSDataProvider?.subscriptions;
+                if (provider) {
+                    await provider.deleteSubscription(id, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.finance.subscriptions = state.finance.subscriptions
+                            .filter(subscription => String(subscription.id) !== String(id));
+                        saveData();
+                        return null;
+                    });
+                }
+                frontendApiCache.subscriptions = (frontendApiCache.subscriptions || [])
+                    .filter(item => String(item.id) !== String(id));
+                await renderMovements();
+                renderDashboard();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar la suscripción.');
+            }
         }
         function addSubscriptionPayment(id, dueDate) {
             const period = monthKeyFromDate(dueDate);
             if (!guardFinanceMonthWritable(period)) return;
-            const item = state.finance.subscriptions.find(subscription => String(subscription.id) === String(id));
+            if (!guardFinanceTransactionWrite()) return;
+            const item = visibleSubscriptions().find(subscription => String(subscription.id) === String(id));
             if (!item) return;
             if (subscriptionPaidForDue(item, dueDate)) return alert('Esta suscripción ya está registrada como gasto del mes.');
+            // LEGACY_LOCALSTORAGE_FALLBACK
             state.movements.push({
                 id: Date.now(),
                 date: dueDate,
@@ -4393,26 +4768,238 @@ Cardio 20 min..."></textarea>
             document.getElementById('expense-nature-wrap')?.classList.toggle('hidden', type !== 'gasto');
         }
 
-        function addMovement() {
+        function financeTransactionsReadOnly() {
+            return apiDomainActive('transactions')
+                && !window.LIFE_OS_FINANCE_WRITE_FLAGS?.useApiForTransactionWrites;
+        }
+        function guardFinanceTransactionWrite() {
+            if (!financeTransactionsReadOnly()) return true;
+            alert('Finanzas está leyendo desde SQLite en modo de validación. La escritura por API sigue desactivada para evitar duplicados.');
+            return false;
+        }
+        function renderFinanceDataSource(period) {
+            const badge = document.getElementById('finance-data-source');
+            if (!badge) return;
+            const fromApi = apiDomainActive('transactions');
+            if (!fromApi) {
+                badge.textContent = 'localStorage fallback';
+                badge.className = 'dark-chip rounded-full px-3 py-1 text-xs text-yellow-300';
+                badge.title = 'La API está vacía, desactivada o no disponible.';
+                return;
+            }
+            const report = window.lifeOSFinanceParity?.buildReport(
+                frontendApiCache.transactions || [],
+                state.movements,
+                { period }
+            );
+            const parity = Boolean(report?.isMatch);
+            badge.textContent = parity ? 'SQLite · paridad OK' : 'SQLite · revisar paridad';
+            badge.className = `dark-chip rounded-full px-3 py-1 text-xs ${parity ? 'text-emerald-300' : 'text-yellow-300'}`;
+            const writeMode = window.LIFE_OS_FINANCE_WRITE_FLAGS?.useApiForTransactionWrites
+                ? 'Escritura API activa.'
+                : 'Escritura API desactivada.';
+            badge.title = `API: ${report?.api.count || 0} · local: ${report?.local.count || 0}. ${writeMode}`;
+        }
+        function verifyFinanceParity() {
+            const container = document.getElementById('finance-parity-report');
+            if (!container) return;
+            if (!apiDomainActive('transactions') || !Array.isArray(frontendApiCache.transactions)) {
+                container.classList.remove('hidden');
+                container.innerHTML = '<p class="text-sm text-yellow-300">La API no es la fuente activa. Inicia el backend y vuelve a verificar.</p>';
+                return;
+            }
+            const period = selectedFinancePeriod();
+            const report = window.lifeOSFinanceParity?.buildReport(
+                frontendApiCache.transactions,
+                state.movements,
+                {
+                    period,
+                    apiDebts: frontendApiCache.debtLedger?.entities || [],
+                    localDebts: localDebtParityRecords(),
+                    apiSubscriptions: frontendApiCache.subscriptions || [],
+                    localSubscriptions: state.finance.subscriptions || []
+                }
+            );
+            if (!report) return;
+            const labels = {
+                count: 'Número de movimientos',
+                income: 'Ingresos',
+                expense: 'Gastos',
+                balance: 'Balance',
+                categories: 'Categorías',
+                accounts: 'Cuentas',
+                summary: 'Resumen de deudas o suscripciones'
+            };
+            container.classList.remove('hidden');
+            container.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                        <p class="font-bold ${report.isMatch ? 'text-emerald-300' : 'text-yellow-300'}">${report.isMatch ? 'Paridad financiera correcta' : 'Hay diferencias por revisar'}</p>
+                        <p class="text-xs text-slate-500 mt-1">${period} · API ${report.api.count} movimiento(s) · local ${report.local.count}</p>
+                    </div>
+                    <span class="dark-chip rounded-full px-3 py-1 text-xs">${report.differences.length} diferencia(s)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
+                    <div class="dark-soft rounded-lg p-3"><p class="text-xs text-slate-500">Ingresos API / local</p><p class="font-bold">${formatCurrency(report.api.income)} / ${formatCurrency(report.local.income)}</p></div>
+                    <div class="dark-soft rounded-lg p-3"><p class="text-xs text-slate-500">Gastos API / local</p><p class="font-bold">${formatCurrency(report.api.expense)} / ${formatCurrency(report.local.expense)}</p></div>
+                    <div class="dark-soft rounded-lg p-3"><p class="text-xs text-slate-500">Balance API / local</p><p class="font-bold">${formatCurrency(report.api.balance)} / ${formatCurrency(report.local.balance)}</p></div>
+                </div>
+                ${report.differences.length ? `<div class="mt-3 text-xs text-slate-400">${report.differences.map(item => `<p>• ${labels[item.metric] || item.metric}: API ${typeof item.api === 'object' ? 'resumen distinto' : item.api} · local ${typeof item.local === 'object' ? 'resumen distinto' : item.local}</p>`).join('')}</div>` : ''}
+            `;
+        }
+        async function syncTransactionsFromProvider() {
+            const provider = window.lifeOSDataProvider?.transactions;
+            if (!provider) return { data: state.movements, source: 'localStorage' };
+            const result = await provider.getTransactions({}, () => state.movements);
+            frontendApiCache.transactions = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        function localDebtParityRecords() {
+            const ledger = ensureDebtLedger();
+            return ledger.entities.map(entity => {
+                const balance = ledger.transactions
+                    .filter(item => String(item.entityId) === String(entity.id))
+                    .reduce((sum, item) => sum + debtTransactionEffect(item), 0);
+                return {
+                    direction: balance > 0 ? 'receivable' : 'owed',
+                    amount: Math.abs(balance)
+                };
+            });
+        }
+        async function syncDebtsFromProvider() {
+            const provider = window.lifeOSDataProvider?.debts;
+            if (!provider) return { data: ensureDebtLedger(), source: 'localStorage' };
+            const result = await provider.getDebts(() => ensureDebtLedger());
+            frontendApiCache.debtLedger = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        async function syncInvestmentsFromProvider() {
+            const provider = window.lifeOSDataProvider?.investments;
+            if (!provider) return { data: state.investments, source: 'localStorage' };
+            const result = await provider.getInvestments(() => state.investments);
+            frontendApiCache.investments = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        async function syncFinanceReferenceData() {
+            ensureFinance();
+            const budgetProvider = window.lifeOSDataProvider?.budgets;
+            const subscriptionProvider = window.lifeOSDataProvider?.subscriptions;
+            const [budgets, subscriptions, debts, investments] = await Promise.all([
+                budgetProvider
+                    ? budgetProvider.getBudgets(() => Object.entries(state.finance.budgets).map(([period, item]) => ({ ...item, period })))
+                    : { data: [], source: 'localStorage' },
+                subscriptionProvider
+                    ? subscriptionProvider.getSubscriptions(() => state.finance.subscriptions)
+                    : { data: state.finance.subscriptions, source: 'localStorage' },
+                syncDebtsFromProvider(),
+                syncInvestmentsFromProvider()
+            ]);
+            frontendApiCache.budgets = budgets.source === 'api' ? budgets.data : null;
+            frontendApiCache.subscriptions = subscriptions.source === 'api' ? subscriptions.data : null;
+            return { budgets, subscriptions, debts, investments };
+        }
+
+        async function addMovement() {
             const date = document.getElementById('mov-date').value, amount = parseFloat(document.getElementById('mov-amount').value);
             const cat = document.getElementById('mov-category').value, name = document.getElementById('mov-name').value, type = document.getElementById('mov-type').value;
             if(!date || !amount || !name) return alert("Llena los campos requeridos");
             if (!guardFinanceMonthWritable(monthKeyFromDate(date))) return;
+            if (!guardFinanceTransactionWrite()) return;
             const expenseNature = type === 'gasto' ? document.getElementById('mov-expense-nature')?.value || inferExpenseNature({ type, category: cat, name }) : '';
-            state.movements.push({ id: Date.now(), date, type, category: cat, name, amount, expenseNature });
-            saveData();
-            document.getElementById('mov-amount').value = ''; document.getElementById('mov-name').value = '';
-            renderMovements();
-            refreshPulseIfAvailable();
+            const item = {
+                id: Date.now(),
+                date,
+                type,
+                category: cat,
+                name,
+                amount,
+                expenseNature,
+                source: 'frontend',
+                idempotencyKey: window.lifeOSDataProvider?.createIdempotencyKey?.('manual-transaction')
+            };
+            try {
+                const provider = window.lifeOSDataProvider?.transactions;
+                if (provider) {
+                    const result = await provider.createTransaction(item, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.movements.push(item);
+                        saveData();
+                        return item;
+                    });
+                    if (result.source === 'api') upsertApiCache('transactions', result.data);
+                } else {
+                    // LEGACY_LOCALSTORAGE_FALLBACK
+                    state.movements.push(item);
+                    saveData();
+                }
+                document.getElementById('mov-amount').value = '';
+                document.getElementById('mov-name').value = '';
+                await renderMovements();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el movimiento en SQLite. No se modificó localStorage.');
+            }
         }
-        function deleteMovement(id) {
-            const movement = state.movements.find(m => String(m.id) === String(id));
+        async function editMovement(id) {
+            const movement = visibleMovements().find(item => String(item.id) === String(id));
+            if (!movement) return;
+            if (!guardFinanceTransactionWrite()) return;
+            const name = prompt('Editar concepto', movement.name);
+            if (name === null || !name.trim()) return;
+            const amountText = prompt('Editar monto', String(movement.amount));
+            if (amountText === null) return;
+            const amount = Number(amountText);
+            if (!Number.isFinite(amount) || amount <= 0) return alert('Agrega un monto válido.');
+            const next = {
+                ...movement,
+                name: name.trim(),
+                amount,
+                idempotencyKey: window.lifeOSDataProvider?.createIdempotencyKey?.('update-transaction')
+            };
+            try {
+                const provider = window.lifeOSDataProvider?.transactions;
+                if (provider) {
+                    const result = await provider.updateTransaction(id, next, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        const local = state.movements.find(item => String(item.id) === String(id));
+                        if (local) Object.assign(local, next);
+                        saveData();
+                        return next;
+                    });
+                    if (result.source === 'api') upsertApiCache('transactions', result.data);
+                }
+                await renderMovements();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo actualizar el movimiento. No se modificó localStorage.');
+            }
+        }
+        async function deleteMovement(id) {
+            if (!guardFinanceTransactionWrite()) return;
+            const movement = visibleMovements().find(m => String(m.id) === String(id));
             if (movement && !guardFinanceMonthWritable(monthKeyFromDate(movement.date))) return;
-            state.movements = state.movements.filter(m => String(m.id) !== String(id));
-            saveData(); renderMovements(); refreshPulseIfAvailable();
+            if (!confirm('¿Borrar este movimiento? Se conservará como borrado lógico en SQLite.')) return;
+            try {
+                const provider = window.lifeOSDataProvider?.transactions;
+                if (provider) {
+                    await provider.deleteTransaction(id, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.movements = state.movements.filter(m => String(m.id) !== String(id));
+                        saveData();
+                        return null;
+                    });
+                }
+                frontendApiCache.transactions = (frontendApiCache.transactions || [])
+                    .filter(item => String(item.id) !== String(id));
+                await renderMovements();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar el movimiento. No se modificó localStorage.');
+            }
         }
 
-        function renderMovements() {
+        async function renderMovements() {
+            await Promise.all([syncTransactionsFromProvider(), syncFinanceReferenceData()]);
             const periodInput = document.getElementById('finance-period');
             if (periodInput && !periodInput.value) periodInput.value = todayKey().slice(0, 7);
             const period = selectedFinancePeriod();
@@ -4422,6 +5009,7 @@ Cardio 20 min..."></textarea>
 
             const periodLabel = document.getElementById('movement-period-label');
             if (periodLabel) periodLabel.textContent = period;
+            renderFinanceDataSource(period);
             renderFinanceFlowSummary(period, filtered);
             renderMovementBudgetSummary(filtered);
             renderInsights('movement-insights', getMovementInsights(filtered));
@@ -4442,7 +5030,9 @@ Cardio 20 min..."></textarea>
                     <td class="p-3 text-slate-500"><span class="bg-slate-100 px-2 py-1 rounded text-xs">${escapeHtml(m.category)}</span></td>
                     <td class="p-3">${m.type === 'gasto' ? expenseNatureBadge(inferExpenseNature(m)) : '<span class="px-2 py-1 rounded text-xs bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">Ingreso</span>'}</td>
                     <td class="p-3 text-right font-medium ${m.type==='ingreso'?'text-emerald-600':'text-slate-800'}">${m.type==='ingreso'?'+':'-'}${formatCurrency(m.amount)}</td>
-                    <td class="p-3 text-center"><button onclick="deleteMovement(${m.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
+                    <td class="p-3 text-center">${financeTransactionsReadOnly()
+                        ? '<span class="text-slate-600" title="Escritura API desactivada"><i class="fa-solid fa-lock"></i></span>'
+                        : `<span class="inline-flex gap-2"><button onclick='editMovement(${JSON.stringify(m.id)})' class="text-slate-400 hover:text-blue-500"><i class="fa-solid fa-pen"></i></button><button onclick='deleteMovement(${JSON.stringify(m.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></span>`}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -4482,17 +5072,57 @@ Cardio 20 min..."></textarea>
         }
 
         // ================= INVESTMENTS =================
-        function addInvestment() {
+        function financeInvestmentsReadOnly() {
+            return apiDomainActive('investments')
+                && !window.LIFE_OS_FINANCE_WRITE_FLAGS?.useApiForInvestmentWrites;
+        }
+        function guardFinanceInvestmentWrite() {
+            if (!financeInvestmentsReadOnly()) return true;
+            alert('Inversiones está leyendo desde SQLite. La escritura API permanece desactivada durante la validación.');
+            return false;
+        }
+        async function addInvestment() {
             const amount = parseFloat(document.getElementById('inv-amount').value);
             const place = document.getElementById('inv-place').value;
             const type = document.getElementById('inv-type').value;
             if(!amount || !place) return alert("Llena los campos");
-            state.investments.push({ id: Date.now(), amount, place, type });
-            saveData(); renderInvestments();
+            if (!guardFinanceInvestmentWrite()) return;
+            const item = { id: Date.now(), amount, place, type, asOfDate: todayKey() };
+            try {
+                const provider = window.lifeOSDataProvider?.investments;
+                if (provider) {
+                    await provider.createInvestment(item, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.investments.push(item);
+                        saveData();
+                        return item;
+                    });
+                }
+                if (apiDomainActive('investments')) await syncInvestmentsFromProvider();
+                renderInvestments();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar la inversión en SQLite.');
+            }
         }
-        function delInvestment(id) {
-            state.investments = state.investments.filter(i => i.id !== id);
-            saveData(); renderInvestments();
+        async function delInvestment(id) {
+            if (!guardFinanceInvestmentWrite()) return;
+            if (!confirm('¿Borrar esta inversión? En SQLite se conservará como borrado lógico.')) return;
+            try {
+                const provider = window.lifeOSDataProvider?.investments;
+                if (provider) {
+                    await provider.deleteInvestment(id, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.investments = state.investments
+                            .filter(item => String(item.id) !== String(id));
+                        saveData();
+                        return null;
+                    });
+                }
+                if (apiDomainActive('investments')) await syncInvestmentsFromProvider();
+                renderInvestments();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar la inversión.');
+            }
         }
         function renderInvestments() {
             ensureGoalsConfig();
@@ -4504,8 +5134,8 @@ Cardio 20 min..."></textarea>
 
             const tbody = document.getElementById('inv-tbody'); tbody.innerHTML = '';
             let total = 0; const typeData = {};
-            
-            state.investments.forEach(i => {
+
+            visibleInvestments().forEach(i => {
                 total += i.amount;
                 typeData[i.type] = (typeData[i.type] || 0) + i.amount;
                 const tr = document.createElement('tr'); tr.className = "border-b border-slate-100 hover:bg-slate-50";
@@ -4513,12 +5143,14 @@ Cardio 20 min..."></textarea>
                     <td class="p-3 font-medium text-slate-700">${i.place}</td>
                     <td class="p-3 text-slate-500"><span class="bg-indigo-50 text-indigo-600 px-2 py-1 rounded text-xs">${i.type}</span></td>
                     <td class="p-3 text-right font-medium text-slate-800">$${i.amount.toLocaleString()}</td>
-                    <td class="p-3 text-center"><button onclick="delInvestment(${i.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
+                    <td class="p-3 text-center">${financeInvestmentsReadOnly()
+                        ? '<span class="text-slate-600" title="Escritura API desactivada"><i class="fa-solid fa-lock"></i></span>'
+                        : `<button onclick='delInvestment(${JSON.stringify(i.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>`}</td>
                 `;
                 tbody.appendChild(tr);
             });
             document.getElementById('inv-total-display').textContent = `$${total.toLocaleString('en-US',{minimumFractionDigits:2})}`;
-            
+
             const ctx = document.getElementById('invPieChart').getContext('2d');
             if(invPieInst) invPieInst.destroy();
             invPieInst = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(typeData), datasets: [{ data: Object.values(typeData), backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false } });
@@ -4575,7 +5207,7 @@ Cardio 20 min..."></textarea>
         }
         function sortedKmLogs(desc = false) {
             ensureVehicle();
-            const logs = [...state.vehicle.kmLogs].sort((a, b) => {
+            const logs = [...visibleVehicleState().kmLogs].sort((a, b) => {
                 const dateCompare = String(a.date || '').localeCompare(String(b.date || ''));
                 return dateCompare || Number(a.id || 0) - Number(b.id || 0);
             });
@@ -4583,7 +5215,7 @@ Cardio 20 min..."></textarea>
         }
         function sortedVehicleServices(desc = false) {
             ensureVehicle();
-            const services = [...state.vehicle.services].sort((a, b) => {
+            const services = [...visibleVehicleState().services].sort((a, b) => {
                 const dateCompare = String(a.date || '').localeCompare(String(b.date || ''));
                 return dateCompare || Number(a.id || 0) - Number(b.id || 0);
             });
@@ -4595,8 +5227,9 @@ Cardio 20 min..."></textarea>
         }
         function getLatestVehicleService() {
             ensureVehicle();
-            const p = state.vehicle.profile;
-            const candidates = [...state.vehicle.services];
+            const vehicle = visibleVehicleState();
+            const p = vehicle.profile;
+            const candidates = [...vehicle.services];
             if (p.lastServiceDate || Number(p.lastServiceKm || 0) > 0) {
                 candidates.push({
                     id: 'profile',
@@ -4618,8 +5251,8 @@ Cardio 20 min..."></textarea>
             const latest = getLatestKmLog();
             return Math.max(
                 Number(latest?.km || 0),
-                Number(state.vehicle.profile.currentKm || 0),
-                Number(state.vehicle.profile.lastServiceKm || 0)
+                Number(visibleVehicleState().profile.currentKm || 0),
+                Number(visibleVehicleState().profile.lastServiceKm || 0)
             );
         }
         function getWeeklyVehicleKm(startKey, endKey) {
@@ -4634,7 +5267,7 @@ Cardio 20 min..."></textarea>
         }
         function getVehicleServiceAlert() {
             ensureVehicle();
-            const p = state.vehicle.profile;
+            const p = visibleVehicleState().profile;
             const latestService = getLatestVehicleService();
             const currentKm = getCurrentVehicleKm();
             const intervalKm = Math.max(1, Number(p.serviceIntervalKm || 10000));
@@ -4701,12 +5334,13 @@ Cardio 20 min..."></textarea>
         }
         function getVehicleObligationRows() {
             ensureVehicle();
+            const obligations = visibleVehicleState().obligations;
             const year = new Date().getFullYear();
             const currentMonth = new Date().getMonth() + 1;
             const rows = [];
             const yearly = [
-                { type: 'refrendo', month: state.vehicle.obligations.refrendo.month, label: state.vehicle.obligations.refrendo.label, done: state.vehicle.obligations.refrendo.doneYears.includes(String(year)), periodKey: String(year) },
-                { type: 'seguro', month: state.vehicle.obligations.seguro.month, label: state.vehicle.obligations.seguro.label, done: state.vehicle.obligations.seguro.doneYears.includes(String(year)), periodKey: String(year) }
+                { type: 'refrendo', month: obligations.refrendo.month, label: obligations.refrendo.label, done: obligations.refrendo.doneYears.includes(String(year)), periodKey: String(year) },
+                { type: 'seguro', month: obligations.seguro.month, label: obligations.seguro.label, done: obligations.seguro.doneYears.includes(String(year)), periodKey: String(year) }
             ];
             yearly.forEach(item => {
                 rows.push({
@@ -4715,13 +5349,13 @@ Cardio 20 min..."></textarea>
                     status: item.done ? 'Completado' : item.month < currentMonth ? 'Vencido' : item.month === currentMonth ? 'Pendiente' : 'Próximo'
                 });
             });
-            state.vehicle.obligations.verificacion.months.forEach(month => {
+            obligations.verificacion.months.forEach(month => {
                 const periodKey = `${year}-${String(month).padStart(2, '0')}`;
-                const done = state.vehicle.obligations.verificacion.donePeriods.includes(periodKey);
+                const done = obligations.verificacion.donePeriods.includes(periodKey);
                 rows.push({
                     type: 'verificacion',
                     month,
-                    label: state.vehicle.obligations.verificacion.label,
+                    label: obligations.verificacion.label,
                     done,
                     periodKey,
                     date: `${periodKey}-01`,
@@ -4730,9 +5364,10 @@ Cardio 20 min..."></textarea>
             });
             return rows.sort((a, b) => a.date.localeCompare(b.date));
         }
-        function saveVehicleProfile() {
+        async function saveVehicleProfile() {
+            if (!guardCarWrite()) return;
             ensureVehicle();
-            const p = state.vehicle.profile;
+            const p = cloneData(visibleVehicleState().profile);
             p.name = readTextInput('vehicle-name');
             p.plate = readTextInput('vehicle-plate');
             p.serviceIntervalKm = Math.max(1000, readNumberInput('vehicle-service-interval', 10000));
@@ -4743,35 +5378,89 @@ Cardio 20 min..."></textarea>
             p.lastServiceKm = Math.max(0, readNumberInput('vehicle-last-service-km', 0));
             p.lastServiceShop = readTextInput('vehicle-last-service-shop');
             p.targetKm = Math.max(100000, readNumberInput('vehicle-target-km', 250000));
-            saveData();
-            renderVehicle();
-            refreshPulseIfAvailable();
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                const result = await provider.updateCarProfile(p, () => {
+                    state.vehicle.profile = p;
+                    saveData();
+                    return p;
+                });
+                if (result.source === 'api' && frontendApiCache.car) {
+                    frontendApiCache.car.summary.profile = result.data;
+                }
+                renderVehicle();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el perfil del coche.');
+            }
         }
-        function addKmLog() {
+        async function addKmLog() {
+            if (!guardCarWrite()) return;
             ensureVehicle();
             const date = readTextInput('km-date');
             const km = readNumberInput('km-current');
             if (!date || km <= 0) return alert('Agrega fecha y kilometraje actual válido.');
-            state.vehicle.kmLogs.push({
+            const item = {
                 id: Date.now(),
+                logType: 'odometer',
                 date,
                 km,
                 hours: readNumberInput('km-hours'),
                 trips: readNumberInput('km-trips'),
                 notes: readTextInput('km-notes')
-            });
-            saveData();
-            resetInputs(['km-current', 'km-hours', 'km-trips', 'km-notes']);
-            document.getElementById('km-date').value = todayKey();
-            renderVehicle();
-            refreshPulseIfAvailable();
+            };
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                const result = await provider.createCarLog(item, () => {
+                    state.vehicle.kmLogs.push(item);
+                    saveData();
+                    return item;
+                });
+                if (result.source === 'api') {
+                    frontendApiCache.car.logs = [...(frontendApiCache.car.logs || []), result.data];
+                    frontendApiCache.car.summary.current_odometer_km = Math.max(
+                        Number(frontendApiCache.car.summary.current_odometer_km || 0),
+                        Number(result.data.km || 0)
+                    );
+                }
+                resetInputs(['km-current', 'km-hours', 'km-trips', 'km-notes']);
+                document.getElementById('km-date').value = todayKey();
+                renderVehicle();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el kilometraje.');
+            }
         }
-        function deleteKmLog(id) {
+        async function deleteKmLog(id) {
+            if (!guardCarWrite()) return;
             if (!confirm('¿Borrar este registro de kilometraje?')) return;
-            state.vehicle.kmLogs = state.vehicle.kmLogs.filter(log => log.id !== id);
-            saveData();
-            renderVehicle();
-            refreshPulseIfAvailable();
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                await provider.deleteCarLog(id, () => {
+                    state.vehicle.kmLogs = state.vehicle.kmLogs.filter(log => String(log.id) !== String(id));
+                    saveData();
+                });
+                if (frontendApiCache.car) {
+                    frontendApiCache.car.logs = (frontendApiCache.car.logs || [])
+                        .filter(log => String(log.id) !== String(id));
+                    const remaining = frontendApiCache.car.logs
+                        .filter(log => log.logType === 'service')
+                        .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+                    const latest = remaining.at(-1);
+                    const profile = {
+                        ...visibleVehicleState().profile,
+                        lastServiceDate: latest?.date || '',
+                        lastServiceKm: Number(latest?.km || 0),
+                        lastServiceShop: latest?.shop || ''
+                    };
+                    const profileResult = await provider.updateCarProfile(profile);
+                    frontendApiCache.car.summary.profile = profileResult.data;
+                }
+                renderVehicle();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar el kilometraje.');
+            }
         }
         function syncVehicleProfileFromLatestService() {
             ensureVehicle();
@@ -4787,13 +5476,15 @@ Cardio 20 min..."></textarea>
                 p.lastServiceShop = '';
             }
         }
-        function addVehicleService() {
+        async function addVehicleService() {
+            if (!guardCarWrite()) return;
             ensureVehicle();
             const date = readTextInput('service-date');
             const km = readNumberInput('service-km');
             if (!date || km <= 0) return alert('Agrega fecha y km del servicio.');
             const service = {
                 id: Date.now(),
+                logType: 'service',
                 date,
                 km,
                 type: readTextInput('service-type') || 'Servicio',
@@ -4801,42 +5492,118 @@ Cardio 20 min..."></textarea>
                 cost: readNumberInput('service-cost'),
                 receipt: readTextInput('service-receipt')
             };
-            state.vehicle.services.push(service);
-            Object.assign(state.vehicle.profile, {
-                lastServiceDate: date,
-                lastServiceKm: km,
-                lastServiceShop: service.shop
-            });
-            saveData();
-            resetInputs(['service-km', 'service-type', 'service-shop', 'service-cost', 'service-receipt']);
-            document.getElementById('service-date').value = todayKey();
-            renderVehicle();
-            refreshPulseIfAvailable();
-        }
-        function deleteVehicleService(id) {
-            if (!confirm('¿Borrar este servicio?')) return;
-            state.vehicle.services = state.vehicle.services.filter(service => service.id !== id);
-            syncVehicleProfileFromLatestService();
-            saveData();
-            renderVehicle();
-            refreshPulseIfAvailable();
-        }
-        function toggleVehicleObligation(type, periodKey) {
-            ensureVehicle();
-            if (type === 'verificacion') {
-                const list = state.vehicle.obligations.verificacion.donePeriods;
-                state.vehicle.obligations.verificacion.donePeriods = list.includes(periodKey) ? list.filter(p => p !== periodKey) : [...list, periodKey];
-            } else {
-                const list = state.vehicle.obligations[type].doneYears;
-                state.vehicle.obligations[type].doneYears = list.includes(periodKey) ? list.filter(y => y !== periodKey) : [...list, periodKey];
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                const result = await provider.createCarLog(service, () => {
+                    state.vehicle.services.push(service);
+                    Object.assign(state.vehicle.profile, {
+                        lastServiceDate: date,
+                        lastServiceKm: km,
+                        lastServiceShop: service.shop
+                    });
+                    saveData();
+                    return service;
+                });
+                if (result.source === 'api') {
+                    frontendApiCache.car.logs = [...(frontendApiCache.car.logs || []), result.data];
+                    const profile = {
+                        ...visibleVehicleState().profile,
+                        lastServiceDate: date,
+                        lastServiceKm: km,
+                        lastServiceShop: service.shop
+                    };
+                    const profileResult = await provider.updateCarProfile(profile);
+                    frontendApiCache.car.summary.profile = profileResult.data;
+                }
+                resetInputs(['service-km', 'service-type', 'service-shop', 'service-cost', 'service-receipt']);
+                document.getElementById('service-date').value = todayKey();
+                renderVehicle();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el servicio.');
             }
-            saveData();
-            renderVehicle();
-            refreshPulseIfAvailable();
+        }
+        async function deleteVehicleService(id) {
+            if (!guardCarWrite()) return;
+            if (!confirm('¿Borrar este servicio?')) return;
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                await provider.deleteCarLog(id, () => {
+                    state.vehicle.services = state.vehicle.services.filter(service => String(service.id) !== String(id));
+                    syncVehicleProfileFromLatestService();
+                    saveData();
+                });
+                if (frontendApiCache.car) {
+                    frontendApiCache.car.logs = (frontendApiCache.car.logs || [])
+                        .filter(log => String(log.id) !== String(id));
+                }
+                renderVehicle();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar el servicio.');
+            }
+        }
+        async function toggleVehicleObligation(type, periodKey) {
+            if (!guardCarWrite()) return;
+            ensureVehicle();
+            const next = cloneData(visibleVehicleState());
+            if (type === 'verificacion') {
+                const list = next.obligations.verificacion.donePeriods;
+                next.obligations.verificacion.donePeriods = list.includes(periodKey) ? list.filter(p => p !== periodKey) : [...list, periodKey];
+            } else {
+                const list = next.obligations[type].doneYears;
+                next.obligations[type].doneYears = list.includes(periodKey) ? list.filter(y => y !== periodKey) : [...list, periodKey];
+            }
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                const existing = (frontendApiCache.car?.reminders || [])
+                    .find(item => item.reminderType === type);
+                const obligation = next.obligations[type];
+                const payload = {
+                    ...(existing || {}),
+                    ...obligation,
+                    reminderType: type,
+                    title: obligation.label || type,
+                    status: type === 'verificacion'
+                        ? (
+                            obligation.months.every(month => (
+                                obligation.donePeriods.includes(
+                                    `${periodKey.slice(0, 4)}-${String(month).padStart(2, '0')}`
+                                )
+                            ))
+                                ? 'done'
+                                : 'pending'
+                        )
+                        : (obligation.doneYears.includes(periodKey) ? 'done' : 'pending'),
+                    recurrence: 'yearly'
+                };
+                const result = existing
+                    ? await provider.updateCarReminder(existing.id, payload, () => {
+                        state.vehicle.obligations = next.obligations;
+                        saveData();
+                        return payload;
+                    })
+                    : await provider.createCarReminder(payload, () => {
+                        state.vehicle.obligations = next.obligations;
+                        saveData();
+                        return payload;
+                    });
+                if (result.source === 'api') {
+                    const reminders = frontendApiCache.car.reminders || [];
+                    frontendApiCache.car.reminders = [
+                        ...reminders.filter(item => item.reminderType !== type),
+                        result.data
+                    ];
+                }
+                renderVehicle();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo actualizar la obligación.');
+            }
         }
         function getLastMaintenanceLog(key) {
             ensureVehicle();
-            const logs = state.vehicle.maintenanceLogs.filter(log => log.key === key).sort((a, b) => {
+            const logs = visibleVehicleState().maintenanceLogs.filter(log => log.key === key).sort((a, b) => {
                 const dateCompare = String(a.date || '').localeCompare(String(b.date || ''));
                 return dateCompare || Number(a.km || 0) - Number(b.km || 0);
             });
@@ -4879,7 +5646,7 @@ Cardio 20 min..."></textarea>
             const urgent = statuses.filter(row => row.level === 'urgent');
             const warning = statuses.filter(row => row.level === 'warning');
             const currentKm = getCurrentVehicleKm();
-            const targetKm = Number(state.vehicle.profile?.targetKm || 250000);
+            const targetKm = Number(visibleVehicleState().profile?.targetKm || 250000);
             const insights = [];
             if (urgent.length) insights.push({ icon: 'fa-screwdriver-wrench', title: 'Mantenimiento vencido', text: `${urgent[0].item.label}: ${urgent[0].message}`, tone: 'danger' });
             else if (warning.length) insights.push({ icon: 'fa-clock', title: 'Mantenimiento cerca', text: `${warning[0].item.label}: ${warning[0].message}`, tone: 'warning' });
@@ -4923,36 +5690,51 @@ Cardio 20 min..."></textarea>
                 `;
             }).join('');
         }
-        function addVehicleMaintenanceLog() {
+        async function addVehicleMaintenanceLog() {
+            if (!guardCarWrite()) return;
             ensureVehicle();
             const key = readTextInput('maintenance-item');
             const item = VEHICLE_MAINTENANCE_ITEMS.find(row => row.key === key);
             const date = readTextInput('maintenance-date');
             const km = readNumberInput('maintenance-km', getCurrentVehicleKm());
             if (!item || !date || km <= 0) return alert('Agrega revisión, fecha y km válidos.');
-            state.vehicle.maintenanceLogs.push({
+            const log = {
                 id: Date.now(),
+                logType: 'maintenance',
                 key,
                 label: item.label,
                 date,
                 km,
                 cost: readNumberInput('maintenance-cost'),
                 notes: readTextInput('maintenance-notes')
-            });
-            saveData();
-            resetInputs(['maintenance-cost', 'maintenance-notes']);
-            document.getElementById('maintenance-date').value = todayKey();
-            document.getElementById('maintenance-km').value = getCurrentVehicleKm() || '';
-            renderVehicle();
-            refreshPulseIfAvailable();
+            };
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                const result = await provider.createCarLog(log, () => {
+                    state.vehicle.maintenanceLogs.push(log);
+                    saveData();
+                    return log;
+                });
+                if (result.source === 'api') {
+                    frontendApiCache.car.logs = [...(frontendApiCache.car.logs || []), result.data];
+                }
+                resetInputs(['maintenance-cost', 'maintenance-notes']);
+                document.getElementById('maintenance-date').value = todayKey();
+                document.getElementById('maintenance-km').value = getCurrentVehicleKm() || '';
+                renderVehicle();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el mantenimiento.');
+            }
         }
         function renderVehicle() {
             ensureVehicle();
-            const p = state.vehicle.profile;
+            const vehicle = visibleVehicleState();
+            const p = vehicle.profile;
             const latestService = getLatestVehicleService();
             const alert = getVehicleServiceAlert();
             const currentKm = getCurrentVehicleKm();
-            const serviceCost = state.vehicle.services.reduce((sum, service) => sum + Number(service.cost || 0), 0);
+            const serviceCost = vehicle.services.reduce((sum, service) => sum + Number(service.cost || 0), 0);
             const nextServiceKm = Number(latestService?.km || p.lastServiceKm || 0) + Number(p.serviceIntervalKm || 10000);
 
             document.getElementById('vehicle-name').value = p.name || '';
@@ -4973,7 +5755,7 @@ Cardio 20 min..."></textarea>
                 { label: 'Km actual', value: currentKm ? `${formatNumber(currentKm, 0)} km` : '--', hint: p.name ? `${escapeHtml(p.name)} ${p.plate ? `· ${escapeHtml(p.plate)}` : ''}` : 'Un solo vehículo' },
                 { label: 'Desde último servicio', value: `${formatNumber(alert.kmSince, 0)} km`, hint: `${alert.monthsSince} mes(es) desde servicio` },
                 { label: 'Próximo servicio', value: `${formatNumber(nextServiceKm, 0)} km`, hint: alert.dueDate ? `O por fecha: ${formatDateLabel(alert.dueDate)}` : 'Captura fecha de servicio' },
-                { label: 'Mantenimiento histórico', value: formatCurrency(serviceCost), hint: `${state.vehicle.services.length} servicio(s) registrados` },
+                { label: 'Mantenimiento histórico', value: formatCurrency(serviceCost), hint: `${vehicle.services.length} servicio(s) registrados` },
                 { label: 'Meta vida auto', value: `${formatNumber(p.targetKm || 250000, 0)} km`, hint: currentKm ? `Faltan ${formatNumber(Math.max(0, Number(p.targetKm || 250000) - currentKm), 0)} km` : 'Captura km actual' }
             ].map(card => `
                 <div class="dark-soft rounded-xl p-4">
@@ -5029,7 +5811,7 @@ Cardio 20 min..."></textarea>
                     <td class="p-3 text-right">${formatNumber(log.km, 0)}</td>
                     <td class="p-3 text-right">${formatNumber(log.hours, 1)}</td>
                     <td class="p-3 text-right">${formatNumber(log.trips, 0)}</td>
-                    <td class="p-3 text-center"><button onclick="deleteKmLog(${log.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
+                    <td class="p-3 text-center"><button onclick='deleteKmLog(${JSON.stringify(log.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>
             `).join('') : `<tr><td colspan="5" class="p-6 text-center text-slate-500">Sin kilometraje todavía.</td></tr>`;
 
@@ -5041,7 +5823,7 @@ Cardio 20 min..."></textarea>
                     <td class="p-3 font-medium">${escapeHtml(service.type || 'Servicio')}${service.receipt ? `<div class="text-xs text-slate-500">${escapeHtml(service.receipt)}</div>` : ''}</td>
                     <td class="p-3 text-right">${formatNumber(service.km, 0)}</td>
                     <td class="p-3 text-right">${formatCurrency(service.cost)}</td>
-                    <td class="p-3 text-center"><button onclick="deleteVehicleService(${service.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
+                    <td class="p-3 text-center"><button onclick='deleteVehicleService(${JSON.stringify(service.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>
             `).join('') : `<tr><td colspan="5" class="p-6 text-center text-slate-500">Sin servicios registrados.</td></tr>`;
         }
@@ -6036,7 +6818,16 @@ Cardio 20 min..."></textarea>
             updateDebtModalHelp();
             document.getElementById('debt-modal').classList.remove('hidden');
         }
-        function saveDebt() {
+        function financeDebtsReadOnly() {
+            return apiDomainActive('debts')
+                && !window.LIFE_OS_FINANCE_WRITE_FLAGS?.useApiForDebtWrites;
+        }
+        function guardFinanceDebtWrite() {
+            if (!financeDebtsReadOnly()) return true;
+            alert('Deudas está leyendo desde SQLite en modo de validación. La escritura API sigue desactivada para evitar duplicados.');
+            return false;
+        }
+        async function saveDebt() {
             const date = readTextInput('debt-date') || todayKey();
             const dueDate = readTextInput('debt-due-date');
             const type = document.getElementById('debt-transaction-type')?.value || document.getElementById('debt-form-type').value;
@@ -6044,21 +6835,78 @@ Cardio 20 min..."></textarea>
             const desc = document.getElementById('debt-desc').value;
             const amount = parseFloat(document.getElementById('debt-amount').value);
             if(!person || !amount) return;
-            const entity = ensureDebtEntity(person);
-            state.debtLedger.transactions.push({ id: Date.now(), entityId: entity.id, date, dueDate, type, desc, amount });
-            saveData(); closeModal('debt-modal'); renderDebts(); refreshPulseIfAvailable();
+            if (!guardFinanceDebtWrite()) return;
+            try {
+                const provider = window.lifeOSDataProvider?.debts;
+                let entity = visibleDebtLedger().entities
+                    .find(item => item.name.toLowerCase() === person.trim().toLowerCase());
+                if (!entity && provider) {
+                    const created = await provider.createDebt({
+                        name: person.trim(),
+                        direction: type === 'receivable' || type === 'receivable_payment'
+                            ? 'receivable'
+                            : 'owed',
+                        amount: 0,
+                        dueDate,
+                        status: 'active'
+                    }, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        const localEntity = ensureDebtEntity(person);
+                        saveData();
+                        return localEntity;
+                    });
+                    entity = created.data;
+                } else if (!entity) {
+                    entity = ensureDebtEntity(person);
+                }
+                const movement = { id: Date.now(), entityId: entity.id, date, dueDate, type, desc, amount };
+                if (provider) {
+                    await provider.addMovement(entity.id, movement, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.debtLedger.transactions.push(movement);
+                        saveData();
+                        return movement;
+                    });
+                }
+                if (apiDomainActive('debts')) await syncDebtsFromProvider();
+                closeModal('debt-modal');
+                renderDebts();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el movimiento de deuda en SQLite.');
+            }
         }
-        function deleteDebt(id) {
-            ensureDebtLedger();
-            state.debtLedger.transactions = state.debtLedger.transactions.filter(d => String(d.id) !== String(id));
-            saveData(); renderDebts(); refreshPulseIfAvailable();
+        async function deleteDebt(id) {
+            if (!guardFinanceDebtWrite()) return;
+            const movement = visibleDebtLedger().transactions
+                .find(item => String(item.id) === String(id));
+            if (!movement) return;
+            if (!confirm('¿Borrar este movimiento? En SQLite se conservará como borrado lógico.')) return;
+            try {
+                const provider = window.lifeOSDataProvider?.debts;
+                if (provider) {
+                    await provider.deleteMovement(movement.entityId, id, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        state.debtLedger.transactions = state.debtLedger.transactions
+                            .filter(item => String(item.id) !== String(id));
+                        saveData();
+                        return null;
+                    });
+                }
+                if (apiDomainActive('debts')) await syncDebtsFromProvider();
+                renderDebts();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar el movimiento de deuda.');
+            }
         }
         function setDebtEntityFilter(entityId) {
             const input = document.getElementById('debt-entity-filter');
             if (input) input.value = entityId || '';
             renderDebts();
         }
-        function toggleDebtEntityArchive(entityId) {
+        async function toggleDebtEntityArchive(entityId) {
+            if (!guardFinanceDebtWrite()) return;
             const summary = getDebtLedgerSummary();
             const entity = summary.entities.find(item => item.id === entityId);
             const rawEntity = findDebtEntityById(entityId);
@@ -6067,23 +6915,50 @@ Cardio 20 min..."></textarea>
                 alert('Solo puedes archivar entidades liquidadas. Primero registra el pago/cobro que deje el saldo en cero.');
                 return;
             }
-            rawEntity.archived = !rawEntity.archived;
-            saveData();
+            const next = { ...rawEntity, archived: !rawEntity.archived };
+            try {
+                const provider = window.lifeOSDataProvider?.debts;
+                if (provider) {
+                    await provider.updateDebt(entityId, next, () => {
+                        // LEGACY_LOCALSTORAGE_FALLBACK
+                        rawEntity.archived = next.archived;
+                        saveData();
+                        return rawEntity;
+                    });
+                }
+                if (apiDomainActive('debts')) await syncDebtsFromProvider();
+            } catch (error) {
+                return alert(error.message || 'No se pudo actualizar la entidad.');
+            }
             renderDebts();
             refreshPulseIfAvailable();
         }
-        function archiveSettledDebtEntities() {
+        async function archiveSettledDebtEntities() {
+            if (!guardFinanceDebtWrite()) return;
             const summary = getDebtLedgerSummary();
             const settled = summary.entities.filter(entity => !entity.archived && Math.abs(Number(entity.balance || 0)) <= 0.01 && entity.transactions.length);
             if (!settled.length) {
                 alert('No encontré entidades liquidadas pendientes de archivar.');
                 return;
             }
-            settled.forEach(entity => {
-                const rawEntity = findDebtEntityById(entity.id);
-                if (rawEntity) rawEntity.archived = true;
-            });
-            saveData();
+            try {
+                const provider = window.lifeOSDataProvider?.debts;
+                for (const entity of settled) {
+                    const rawEntity = findDebtEntityById(entity.id);
+                    if (!rawEntity) continue;
+                    if (provider) {
+                        await provider.updateDebt(entity.id, { ...rawEntity, archived: true }, () => {
+                            // LEGACY_LOCALSTORAGE_FALLBACK
+                            rawEntity.archived = true;
+                            saveData();
+                            return rawEntity;
+                        });
+                    }
+                }
+                if (apiDomainActive('debts')) await syncDebtsFromProvider();
+            } catch (error) {
+                return alert(error.message || 'No se pudieron archivar las entidades liquidadas.');
+            }
             renderDebts();
             refreshPulseIfAvailable();
             alert(`Archivadas ${settled.length} entidad(es) liquidadas. El historial se conserva.`);
@@ -6212,6 +7087,7 @@ Cardio 20 min..."></textarea>
         const ROUTINE_RANGE_LABEL = '4:00 AM - 9:00 PM';
         function getRoutineDayStats() {
             const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            const schedule = visibleRoutineSchedule();
             const slots = [];
             for (let totalMinutes = ROUTINE_START_HOUR * 60; totalMinutes <= ROUTINE_END_HOUR * 60; totalMinutes += 30) {
                 const h = Math.floor(totalMinutes / 60);
@@ -6220,11 +7096,11 @@ Cardio 20 min..."></textarea>
             }
             return days.map((name, index) => {
                 const day = index + 1;
-                const items = slots.map(time => state.routine.find(r => r.day === day && r.time === time)).filter(Boolean);
+                const items = slots.map(time => schedule.find(r => r.day === day && r.time === time)).filter(Boolean);
                 let consecutive = 0;
                 let maxConsecutive = 0;
                 slots.forEach(time => {
-                    const hasActivity = state.routine.some(r => r.day === day && r.time === time);
+                    const hasActivity = schedule.some(r => r.day === day && r.time === time);
                     consecutive = hasActivity ? consecutive + 1 : 0;
                     maxConsecutive = Math.max(maxConsecutive, consecutive);
                 });
@@ -6246,12 +7122,13 @@ Cardio 20 min..."></textarea>
             ensureWellbeing();
             const currentWeek = document.getElementById('gym-week')?.value || getCurrentWeekKey();
             const dayStats = getRoutineDayStats();
+            const fitness = visibleFitnessState();
             const busiest = [...dayStats].sort((a, b) => b.blocks - a.blocks)[0] || dayStats[0];
             const longest = [...dayStats].sort((a, b) => b.maxConsecutive - a.maxConsecutive)[0] || dayStats[0];
             const mealDays = dayStats.filter(day => day.hasMeal).length;
             const activeDays = dayStats.filter(day => day.blocks > 0).length;
-            const weekGym = (state.fitness.gym || []).filter(item => item.week === currentWeek);
-            const weekCardio = (state.fitness.cardio || []).filter(item => item.week === currentWeek);
+            const weekGym = (fitness.gym || []).filter(item => item.week === currentWeek);
+            const weekCardio = (fitness.cardio || []).filter(item => item.week === currentWeek);
             const cardioMinutes = weekCardio.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
             const wellbeing = getRecentWellbeingStats(7);
             const insights = [];
@@ -6346,7 +7223,7 @@ Cardio 20 min..."></textarea>
         }
         function ensureRoutinePrintNotes() {
             state.routinePrintNotes = mergeDefaults(state.routinePrintNotes || {}, cloneData(defaultState.routinePrintNotes));
-            return state.routinePrintNotes;
+            return visibleRoutinePrintNotes();
         }
         function renderRoutinePrintNotes() {
             const notes = ensureRoutinePrintNotes();
@@ -6361,15 +7238,20 @@ Cardio 20 min..."></textarea>
                 if (el && el.value !== notes[key]) el.value = notes[key] || '';
             });
         }
-        function saveRoutinePrintNotes(showMessage = true) {
-            const notes = ensureRoutinePrintNotes();
+        async function saveRoutinePrintNotes(showMessage = true) {
+            if (!guardRoutineWrite()) return;
+            const notes = cloneData(ensureRoutinePrintNotes());
             notes.skincareMorning = readTextInput('routine-skincare-morning');
             notes.skincareAfternoon = readTextInput('routine-skincare-afternoon');
             notes.skincareNight = readTextInput('routine-skincare-night');
             notes.gym = readTextInput('routine-gym-notes');
-            saveData();
-            const msg = document.getElementById('routine-print-msg');
-            if (msg && showMessage) msg.textContent = 'Textos guardados correctamente.';
+            try {
+                await persistRoutineNotes(notes);
+                const msg = document.getElementById('routine-print-msg');
+                if (msg && showMessage) msg.textContent = 'Textos guardados correctamente.';
+            } catch (error) {
+                alert(error.message || 'No se pudieron guardar las notas de rutina.');
+            }
         }
         function routinePrintableHtml() {
             const notes = ensureRoutinePrintNotes();
@@ -6380,7 +7262,7 @@ Cardio 20 min..."></textarea>
                 const m = totalMinutes % 60;
                 const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
                 rows.push(`<tr><th>${time}</th>${days.map((_, index) => {
-                    const item = state.routine.find(r => r.day === index + 1 && r.time === time);
+                    const item = visibleRoutineSchedule().find(r => r.day === index + 1 && r.time === time);
                     return `<td>${escapeHtml(item?.text || '')}</td>`;
                 }).join('')}</tr>`);
             }
@@ -6405,8 +7287,8 @@ ${block('Skincare - Noche', notes.skincareNight)}
 ${block('Rutina Gym', notes.gym)}
 </body></html>`;
         }
-        function exportRoutinePrintable() {
-            saveRoutinePrintNotes(false);
+        async function exportRoutinePrintable() {
+            if (!routineWritesReadOnly()) await saveRoutinePrintNotes(false);
             const win = window.open('', '_blank');
             if (!win) {
                 downloadTextFile(`lifeos-rutina-imprimir-${todayKey()}.html`, routinePrintableHtml(), 'text/html;charset=utf-8');
@@ -6424,13 +7306,16 @@ ${block('Rutina Gym', notes.gym)}
             renderRoutineGrid();
             renderRoutinePrintNotes();
         }
-        function addGymEntry() {
+        async function addGymEntry() {
+            if (!guardRoutineWrite()) return;
             ensureFitness();
             const week = readTextInput('gym-week') || getCurrentWeekKey();
             const exercise = readTextInput('gym-exercise');
             if (!exercise) return alert('Agrega el nombre del ejercicio o rutina.');
-            state.fitness.gym.push({
+            const item = {
                 id: Date.now(),
+                routineType: 'gym',
+                name: exercise,
                 week,
                 day: document.getElementById('gym-day')?.value || 'Lunes',
                 exercise,
@@ -6438,45 +7323,89 @@ ${block('Rutina Gym', notes.gym)}
                 reps: readNumberInput('gym-reps'),
                 weight: readNumberInput('gym-weight'),
                 notes: readTextInput('gym-notes')
-            });
-            saveData();
-            resetInputs(['gym-exercise', 'gym-sets', 'gym-reps', 'gym-weight', 'gym-notes']);
-            renderFitnessRoutine();
+            };
+            try {
+                const provider = window.lifeOSDataProvider?.routines;
+                const result = await provider.createRoutine(item, () => {
+                    state.fitness.gym.push(item);
+                    saveData();
+                    return item;
+                });
+                if (result.source === 'api') upsertApiCache('routines', result.data);
+                resetInputs(['gym-exercise', 'gym-sets', 'gym-reps', 'gym-weight', 'gym-notes']);
+                renderFitnessRoutine();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar la rutina de gym.');
+            }
         }
-        function deleteGymEntry(id) {
-            state.fitness.gym = (state.fitness.gym || []).filter(item => item.id !== id);
-            saveData();
-            renderFitnessRoutine();
+        async function deleteGymEntry(id) {
+            if (!guardRoutineWrite()) return;
+            try {
+                const provider = window.lifeOSDataProvider?.routines;
+                await provider.deleteRoutine(id, () => {
+                    state.fitness.gym = (state.fitness.gym || []).filter(item => String(item.id) !== String(id));
+                    saveData();
+                });
+                frontendApiCache.routines = (frontendApiCache.routines || [])
+                    .filter(item => String(item.id) !== String(id));
+                renderFitnessRoutine();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar la rutina de gym.');
+            }
         }
-        function addCardioEntry() {
+        async function addCardioEntry() {
+            if (!guardRoutineWrite()) return;
             ensureFitness();
             const date = readTextInput('cardio-date') || todayKey();
             const minutes = readNumberInput('cardio-minutes');
             if (minutes <= 0) return alert('Agrega minutos de cardio.');
-            state.fitness.cardio.push({
+            const item = {
                 id: Date.now(),
+                routineType: 'cardio',
+                name: document.getElementById('cardio-type')?.value || 'Cardio',
                 date,
                 week: weekKeyFromDate(date),
                 type: document.getElementById('cardio-type')?.value || 'Cardio',
                 minutes,
                 distance: readNumberInput('cardio-distance'),
                 intensity: readTextInput('cardio-intensity')
-            });
-            saveData();
-            resetInputs(['cardio-minutes', 'cardio-distance', 'cardio-intensity']);
-            document.getElementById('cardio-date').value = todayKey();
-            renderFitnessRoutine();
+            };
+            try {
+                const provider = window.lifeOSDataProvider?.routines;
+                const result = await provider.createRoutine(item, () => {
+                    state.fitness.cardio.push(item);
+                    saveData();
+                    return item;
+                });
+                if (result.source === 'api') upsertApiCache('routines', result.data);
+                resetInputs(['cardio-minutes', 'cardio-distance', 'cardio-intensity']);
+                document.getElementById('cardio-date').value = todayKey();
+                renderFitnessRoutine();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el cardio.');
+            }
         }
-        function deleteCardioEntry(id) {
-            state.fitness.cardio = (state.fitness.cardio || []).filter(item => item.id !== id);
-            saveData();
-            renderFitnessRoutine();
+        async function deleteCardioEntry(id) {
+            if (!guardRoutineWrite()) return;
+            try {
+                const provider = window.lifeOSDataProvider?.routines;
+                await provider.deleteRoutine(id, () => {
+                    state.fitness.cardio = (state.fitness.cardio || []).filter(item => String(item.id) !== String(id));
+                    saveData();
+                });
+                frontendApiCache.routines = (frontendApiCache.routines || [])
+                    .filter(item => String(item.id) !== String(id));
+                renderFitnessRoutine();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar el cardio.');
+            }
         }
         function renderFitnessRoutine() {
             ensureFitness();
+            const fitness = visibleFitnessState();
             const currentWeek = document.getElementById('gym-week')?.value || getCurrentWeekKey();
-            const weekGym = state.fitness.gym.filter(item => item.week === currentWeek);
-            const weekCardio = state.fitness.cardio.filter(item => item.week === currentWeek);
+            const weekGym = fitness.gym.filter(item => item.week === currentWeek);
+            const weekCardio = fitness.cardio.filter(item => item.week === currentWeek);
             const volume = weekGym.reduce((sum, item) => sum + (Number(item.weight || 0) * Number(item.sets || 0) * Number(item.reps || 0)), 0);
             const cardioMinutes = weekCardio.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
             const cardioKm = weekCardio.reduce((sum, item) => sum + Number(item.distance || 0), 0);
@@ -6496,7 +7425,7 @@ ${block('Rutina Gym', notes.gym)}
                 `).join('');
             }
 
-            const gymRows = [...state.fitness.gym].sort((a, b) => String(b.week).localeCompare(String(a.week)) || String(a.day).localeCompare(String(b.day)));
+            const gymRows = [...fitness.gym].sort((a, b) => String(b.week).localeCompare(String(a.week)) || String(a.day).localeCompare(String(b.day)));
             document.getElementById('gym-routine-tbody').innerHTML = gymRows.length ? gymRows.map(item => `
                 <tr class="border-b hover:bg-slate-50">
                     <td class="p-3">
@@ -6508,11 +7437,11 @@ ${block('Rutina Gym', notes.gym)}
                         <p class="font-bold">${formatNumber(item.weight)} kg</p>
                         <p class="text-xs text-slate-500">${formatNumber(item.sets, 0)} series · ${formatNumber(item.reps, 0)} reps</p>
                     </td>
-                    <td class="p-3 text-center"><button onclick="deleteGymEntry(${item.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
+                    <td class="p-3 text-center"><button onclick='deleteGymEntry(${JSON.stringify(item.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>
             `).join('') : `<tr><td class="p-6 text-center text-slate-500">Sin rutina de gym todavía.</td></tr>`;
 
-            const cardioRows = [...state.fitness.cardio].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+            const cardioRows = [...fitness.cardio].sort((a, b) => String(b.date).localeCompare(String(a.date)));
             document.getElementById('cardio-routine-tbody').innerHTML = cardioRows.length ? cardioRows.map(item => `
                 <tr class="border-b hover:bg-slate-50">
                     <td class="p-3">
@@ -6524,7 +7453,7 @@ ${block('Rutina Gym', notes.gym)}
                         <p class="font-bold">${formatNumber(item.minutes, 0)} min</p>
                         <p class="text-xs text-slate-500">${formatNumber(item.distance, 1)} km</p>
                     </td>
-                    <td class="p-3 text-center"><button onclick="deleteCardioEntry(${item.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
+                    <td class="p-3 text-center"><button onclick='deleteCardioEntry(${JSON.stringify(item.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>
             `).join('') : `<tr><td class="p-6 text-center text-slate-500">Sin cardio todavía.</td></tr>`;
             renderRoutineCoach();
@@ -6541,18 +7470,52 @@ ${block('Rutina Gym', notes.gym)}
                 const tDiv = document.createElement('div'); tDiv.className = "routine-cell routine-time flex items-center justify-center"; tDiv.textContent = timeStr; grid.appendChild(tDiv);
                 for(let d=1; d<=7; d++) {
                     const cell = document.createElement('div'); cell.className = "routine-cell relative p-1";
-                    const act = state.routine.find(r => r.day === d && r.time === timeStr);
+                    const act = visibleRoutineSchedule().find(r => r.day === d && r.time === timeStr);
                     if(act) cell.innerHTML = `<div class="activity-block ${act.color} w-full h-full flex items-center justify-center">${escapeHtml(act.text)}</div>`;
-                    
-                    cell.onclick = () => {
+
+                    cell.onclick = async () => {
+                        if (!guardRoutineWrite()) return;
                         const newText = prompt(`Actividad para ${days[d]} a las ${timeStr} (Deja vacío para borrar):`, act ? act.text : "");
                         if(newText !== null) {
-                            state.routine = state.routine.filter(r => !(r.day === d && r.time === timeStr));
-                            if(newText.trim() !== "") {
-                                const cColor = act ? act.color : colors[Math.floor(Math.random()*colors.length)];
-                                state.routine.push({day: d, time: timeStr, text: newText.trim(), color: cColor});
+                            const provider = window.lifeOSDataProvider?.routines;
+                            try {
+                                if (act && newText.trim() === '') {
+                                    await provider.deleteRoutine(act.id, () => {
+                                        state.routine = state.routine.filter(r => !(r.day === d && r.time === timeStr));
+                                        saveData();
+                                    });
+                                    frontendApiCache.routines = (frontendApiCache.routines || [])
+                                        .filter(item => String(item.id) !== String(act.id));
+                                } else if (newText.trim() !== '') {
+                                    const cColor = act ? act.color : colors[Math.floor(Math.random()*colors.length)];
+                                    const item = {
+                                        ...(act || {}),
+                                        routineType: 'schedule',
+                                        name: newText.trim(),
+                                        day: d,
+                                        time: timeStr,
+                                        text: newText.trim(),
+                                        color: cColor
+                                    };
+                                    const result = act
+                                        ? await provider.updateRoutine(act.id, item, () => {
+                                            state.routine = state.routine.filter(r => !(r.day === d && r.time === timeStr));
+                                            state.routine.push(item);
+                                            saveData();
+                                            return item;
+                                        })
+                                        : await provider.createRoutine(item, () => {
+                                            state.routine.push(item);
+                                            saveData();
+                                            return item;
+                                        });
+                                    if (result.source === 'api') upsertApiCache('routines', result.data);
+                                }
+                                renderRoutineGrid();
+                                refreshPulseIfAvailable();
+                            } catch (error) {
+                                alert(error.message || 'No se pudo actualizar el horario.');
                             }
-                            saveData(); renderRoutineGrid(); refreshPulseIfAvailable();
                         }
                     };
                     grid.appendChild(cell);
@@ -6590,19 +7553,19 @@ ${block('Rutina Gym', notes.gym)}
             return raw === '' ? null : Number(raw);
         }
         function sortedBodyRecords(desc = false) {
-            const records = [...(state.health.bodyRecords || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const records = [...(visibleHealthState().bodyRecords || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
             return desc ? records.reverse() : records;
         }
 
         function renderHealth() {
-            const h = state.health;
+            const h = visibleHealthState();
             h.bodyRecords = h.bodyRecords || [];
             h.goals = mergeDefaults(h.goals || {}, cloneData(defaultState.health.goals));
             if (document.getElementById('health-target-weight')) document.getElementById('health-target-weight').value = h.goals.targetWeight || '';
             if (document.getElementById('health-target-date')) document.getElementById('health-target-date').value = h.goals.targetDate || '';
             renderInsights('health-goal-insights', getHealthGoalInsights());
             const met = document.getElementById('health-metrics');
-            
+
             let wHtml = '';
             for(let i=1; i<=h.water.target; i++) {
                 const isDrank = i <= h.water.current;
@@ -6649,7 +7612,7 @@ ${block('Rutina Gym', notes.gym)}
                 mList.innerHTML += `
                     <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
                         <div><span class="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded uppercase">${escapeHtml(m.type)}</span><p class="text-sm font-medium text-slate-700 mt-1">${escapeHtml(m.desc)}</p></div>
-                        <button onclick="delMeal(${m.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick='delMeal(${JSON.stringify(m.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
                     </div>`;
             });
         }
@@ -6701,7 +7664,7 @@ ${block('Rutina Gym', notes.gym)}
                             <td class="p-3 text-right">${formatMetric(r.abdomen, 'cm')}</td>
                             <td class="p-3 text-right">${formatMetric(r.arm, 'cm')}</td>
                             <td class="p-3 text-right">${formatMetric(r.thigh, 'cm')}</td>
-                            <td class="p-3 text-center"><button onclick="deleteBodyRecord(${r.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
+                            <td class="p-3 text-center"><button onclick='deleteBodyRecord(${JSON.stringify(r.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>`;
                 });
             }
@@ -6736,11 +7699,31 @@ ${block('Rutina Gym', notes.gym)}
             });
         }
 
-        function toggleWater(val) { state.health.water.current = state.health.water.current === val ? val - 1 : val; saveData(); renderHealth(); }
-        function toggleActivity() { state.health.activity.done = !state.health.activity.done; saveData(); renderHealth(); }
-        
+        async function toggleWater(val) {
+            if (!guardHealthWrite()) return;
+            const next = cloneData(visibleHealthState());
+            next.water.current = next.water.current === val ? val - 1 : val;
+            try {
+                await persistDailyHealth(next);
+                renderHealth();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el agua en SQLite.');
+            }
+        }
+        async function toggleActivity() {
+            if (!guardHealthWrite()) return;
+            const next = cloneData(visibleHealthState());
+            next.activity.done = !next.activity.done;
+            try {
+                await persistDailyHealth(next);
+                renderHealth();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar la actividad en SQLite.');
+            }
+        }
+
         function openHealthModal() {
-            const h = state.health;
+            const h = visibleHealthState();
             document.getElementById('hm-cal-t').value = h.calories.target; document.getElementById('hm-cal-c').value = h.calories.current;
             document.getElementById('hm-pro-t').value = h.macros.p.t; document.getElementById('hm-pro-c').value = h.macros.p.c;
             document.getElementById('hm-car-t').value = h.macros.car.t; document.getElementById('hm-car-c').value = h.macros.car.c;
@@ -6748,23 +7731,36 @@ ${block('Rutina Gym', notes.gym)}
             document.getElementById('hm-water-t').value = h.water.target; document.getElementById('hm-act-type').value = h.activity.type;
             document.getElementById('health-modal').classList.remove('hidden');
         }
-        function saveHealth() {
-            const h = state.health;
+        async function saveHealth() {
+            if (!guardHealthWrite()) return;
+            const h = cloneData(visibleHealthState());
             h.calories.target = Number(document.getElementById('hm-cal-t').value); h.calories.current = Number(document.getElementById('hm-cal-c').value);
             h.macros.p.t = Number(document.getElementById('hm-pro-t').value); h.macros.p.c = Number(document.getElementById('hm-pro-c').value);
             h.macros.car.t = Number(document.getElementById('hm-car-t').value); h.macros.car.c = Number(document.getElementById('hm-car-c').value);
             h.macros.f.t = Number(document.getElementById('hm-fat-t').value); h.macros.f.c = Number(document.getElementById('hm-fat-c').value);
             h.water.target = Number(document.getElementById('hm-water-t').value); h.activity.type = document.getElementById('hm-act-type').value;
-            saveData(); closeModal('health-modal'); renderHealth();
+            try {
+                await persistDailyHealth(h);
+                closeModal('health-modal');
+                renderHealth();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar Salud en SQLite.');
+            }
         }
 
-        function saveHealthGoals() {
-            state.health.goals = mergeDefaults(state.health.goals || {}, cloneData(defaultState.health.goals));
-            state.health.goals.targetWeight = readNumberInput('health-target-weight', '');
-            state.health.goals.targetDate = readTextInput('health-target-date');
-            saveData();
-            renderHealth();
-            refreshPulseIfAvailable();
+        async function saveHealthGoals() {
+            if (!guardHealthWrite()) return;
+            const next = cloneData(visibleHealthState());
+            next.goals = mergeDefaults(next.goals || {}, cloneData(defaultState.health.goals));
+            next.goals.targetWeight = readNumberInput('health-target-weight', '');
+            next.goals.targetDate = readTextInput('health-target-date');
+            try {
+                await persistDailyHealth(next);
+                renderHealth();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar la meta de salud.');
+            }
         }
 
         function openBodyRecordModal() {
@@ -6772,7 +7768,8 @@ ${block('Rutina Gym', notes.gym)}
             ['body-weight', 'body-waist', 'body-hip', 'body-chest', 'body-abdomen', 'body-arm', 'body-thigh'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('body-record-modal').classList.remove('hidden');
         }
-        function saveBodyRecord() {
+        async function saveBodyRecord() {
+            if (!guardHealthWrite()) return;
             const date = document.getElementById('body-date').value;
             const weight = optionalNumber('body-weight');
             if (!date || !weight || weight <= 0) return alert('Agrega fecha y peso válido.');
@@ -6788,31 +7785,89 @@ ${block('Rutina Gym', notes.gym)}
                 arm: optionalNumber('body-arm'),
                 thigh: optionalNumber('body-thigh')
             };
-            const existingIndex = state.health.bodyRecords.findIndex(r => r.date === date);
-            if (existingIndex >= 0) {
-                record.id = state.health.bodyRecords[existingIndex].id;
-                state.health.bodyRecords[existingIndex] = record;
-            } else {
-                state.health.bodyRecords.push(record);
+            const existing = (visibleHealthState().bodyRecords || []).find(r => r.date === date);
+            try {
+                const provider = window.lifeOSDataProvider?.health;
+                if (provider) {
+                    const result = existing
+                        ? await provider.updateHealthLog(existing.id, { ...record, id: existing.id, logType: 'body' }, () => {
+                            const index = state.health.bodyRecords.findIndex(r => r.date === date);
+                            if (index >= 0) state.health.bodyRecords[index] = { ...record, id: state.health.bodyRecords[index].id };
+                            else state.health.bodyRecords.push(record);
+                            saveData();
+                            return record;
+                        })
+                        : await provider.createHealthLog({ ...record, logType: 'body' }, () => {
+                            state.health.bodyRecords.push(record);
+                            saveData();
+                            return record;
+                        });
+                    if (result.source === 'api') upsertApiCache('healthLogs', result.data);
+                }
+                closeModal('body-record-modal');
+                renderHealth();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar el peso en SQLite.');
             }
-            saveData();
-            closeModal('body-record-modal');
-            renderHealth();
         }
-        function deleteBodyRecord(id) {
-            state.health.bodyRecords = state.health.bodyRecords.filter(r => r.id !== id);
-            saveData();
-            renderHealth();
+        async function deleteBodyRecord(id) {
+            if (!guardHealthWrite()) return;
+            try {
+                const provider = window.lifeOSDataProvider?.health;
+                if (provider) {
+                    await provider.deleteHealthLog(id, () => {
+                        state.health.bodyRecords = state.health.bodyRecords.filter(r => String(r.id) !== String(id));
+                        saveData();
+                    });
+                }
+                frontendApiCache.healthLogs = (frontendApiCache.healthLogs || [])
+                    .filter(item => String(item.id) !== String(id));
+                renderHealth();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar el registro.');
+            }
         }
-        
+
         function openMealModal() { document.getElementById('meal-modal').classList.remove('hidden'); }
-        function saveMeal() {
+        async function saveMeal() {
+            if (!guardHealthWrite()) return;
             const type = document.getElementById('meal-type').value, desc = document.getElementById('meal-desc').value;
             if(!desc) return;
-            state.health.meals.push({id: Date.now(), type, desc}); saveData(); closeModal('meal-modal'); renderHealth();
-            document.getElementById('meal-desc').value = '';
+            const meal = { id: Date.now(), date: todayKey(), type, desc, logType: 'meal' };
+            try {
+                const provider = window.lifeOSDataProvider?.health;
+                if (provider) {
+                    const result = await provider.createHealthLog(meal, () => {
+                        state.health.meals.push(meal);
+                        saveData();
+                        return meal;
+                    });
+                    if (result.source === 'api') upsertApiCache('healthLogs', result.data);
+                }
+                closeModal('meal-modal');
+                renderHealth();
+                document.getElementById('meal-desc').value = '';
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar la comida.');
+            }
         }
-        function delMeal(id) { state.health.meals = state.health.meals.filter(m=>m.id!==id); saveData(); renderHealth(); }
+        async function delMeal(id) {
+            if (!guardHealthWrite()) return;
+            try {
+                const provider = window.lifeOSDataProvider?.health;
+                if (provider) {
+                    await provider.deleteHealthLog(id, () => {
+                        state.health.meals = state.health.meals.filter(m => String(m.id) !== String(id));
+                        saveData();
+                    });
+                }
+                frontendApiCache.healthLogs = (frontendApiCache.healthLogs || [])
+                    .filter(item => String(item.id) !== String(id));
+                renderHealth();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar la comida.');
+            }
+        }
 
         function openPhotoDb() {
             return new Promise((resolve, reject) => {
@@ -6961,12 +8016,13 @@ ${block('Rutina Gym', notes.gym)}
         // ================= SKINCARE =================
         function renderSkincare() {
             const today = todayKey();
-            state.skincare.completions = state.skincare.completions || {};
-            state.skincare.completions[today] = state.skincare.completions[today] || { morning: [], night: [] };
-            state.skincare.completions[today].morning = state.skincare.completions[today].morning || [];
-            state.skincare.completions[today].night = state.skincare.completions[today].night || [];
-            const total = (state.skincare.morning?.length || 0) + (state.skincare.night?.length || 0);
-            const doneCount = state.skincare.completions[today].morning.length + state.skincare.completions[today].night.length;
+            const skincare = visibleSkincareState();
+            skincare.completions = skincare.completions || {};
+            skincare.completions[today] = skincare.completions[today] || { morning: [], night: [] };
+            skincare.completions[today].morning = skincare.completions[today].morning || [];
+            skincare.completions[today].night = skincare.completions[today].night || [];
+            const total = (skincare.morning?.length || 0) + (skincare.night?.length || 0);
+            const doneCount = skincare.completions[today].morning.length + skincare.completions[today].night.length;
             const status = document.getElementById('skincare-daily-status');
             if (status) status.textContent = `${formatDateLabel(today)} · ${doneCount}/${total} completados`;
             const renderList = (arr, idPrefix, elId) => {
@@ -6976,45 +8032,171 @@ ${block('Rutina Gym', notes.gym)}
                     return;
                 }
                 arr.forEach(item => {
-                    const isDone = state.skincare.completions[today][idPrefix].includes(item.id);
+                    const isDone = skincare.completions[today][idPrefix].includes(item.id);
                     el.innerHTML += `
                         <li class="flex items-center justify-between p-2 hover:bg-slate-50 rounded group">
                             <label class="flex items-center space-x-3 cursor-pointer flex-1">
-                                <input type="checkbox" class="w-5 h-5 accent-primary" ${isDone?'checked':''} onchange="toggleSkin('${idPrefix}', ${item.id})">
+                                <input type="checkbox" class="w-5 h-5 accent-primary" ${isDone?'checked':''} onchange='toggleSkin(${JSON.stringify(idPrefix)}, ${JSON.stringify(item.id)})'>
                                 <span class="${isDone?'text-slate-400 line-through':'text-slate-700'}">${escapeHtml(item.text)}</span>
                             </label>
-                            <button onclick="delSkin('${idPrefix}', ${item.id})" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash text-sm"></i></button>
+                            <button onclick='delSkin(${JSON.stringify(idPrefix)}, ${JSON.stringify(item.id)})' class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash text-sm"></i></button>
                         </li>`;
                 });
             };
-            renderList(state.skincare.morning, 'morning', 'skincare-morning-list');
-            renderList(state.skincare.night, 'night', 'skincare-night-list');
+            renderList(skincare.morning, 'morning', 'skincare-morning-list');
+            renderList(skincare.night, 'night', 'skincare-night-list');
         }
-        function addSkincare(time) {
+        async function addSkincare(time) {
+            if (!guardRoutineWrite()) return;
             const inp = document.getElementById(time==='morning'?'skin-m-input':'skin-n-input');
             const text = inp.value.trim();
             if(!text) return;
-            state.skincare[time].push({id: Date.now(), text});
-            saveData(); inp.value = ''; renderSkincare();
+            const next = cloneData(visibleSkincareState());
+            next[time].push({id: Date.now(), text});
+            try {
+                await persistSkincare(next);
+                inp.value = '';
+                renderSkincare();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar skincare.');
+            }
         }
-        function toggleSkin(time, id) {
+        async function toggleSkin(time, id) {
+            if (!guardRoutineWrite()) return;
             const today = todayKey();
-            state.skincare.completions = state.skincare.completions || {};
-            state.skincare.completions[today] = state.skincare.completions[today] || { morning: [], night: [] };
-            state.skincare.completions[today][time] = state.skincare.completions[today][time] || [];
-            const completed = state.skincare.completions[today][time];
-            state.skincare.completions[today][time] = completed.includes(id) ? completed.filter(itemId => itemId !== id) : [...completed, id];
-            saveData(); renderSkincare();
+            const next = cloneData(visibleSkincareState());
+            next.completions = next.completions || {};
+            next.completions[today] = next.completions[today] || { morning: [], night: [] };
+            next.completions[today][time] = next.completions[today][time] || [];
+            const completed = next.completions[today][time];
+            next.completions[today][time] = completed.includes(id) ? completed.filter(itemId => itemId !== id) : [...completed, id];
+            try {
+                await persistSkincare(next);
+                renderSkincare();
+            } catch (error) {
+                alert(error.message || 'No se pudo actualizar skincare.');
+            }
         }
-        function delSkin(time, id) {
-            state.skincare[time] = state.skincare[time].filter(i=>i.id!==id);
-            Object.keys(state.skincare.completions || {}).forEach(date => {
-                if (state.skincare.completions[date][time]) state.skincare.completions[date][time] = state.skincare.completions[date][time].filter(itemId => itemId !== id);
+        async function delSkin(time, id) {
+            if (!guardRoutineWrite()) return;
+            const next = cloneData(visibleSkincareState());
+            next[time] = next[time].filter(i => String(i.id) !== String(id));
+            Object.keys(next.completions || {}).forEach(date => {
+                if (next.completions[date][time]) next.completions[date][time] = next.completions[date][time].filter(itemId => String(itemId) !== String(id));
             });
-            saveData(); renderSkincare();
+            try {
+                await persistSkincare(next);
+                renderSkincare();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar el paso de skincare.');
+            }
         }
 
         // ================= TODOS =================
+        async function syncTasksFromProvider() {
+            const provider = window.lifeOSDataProvider?.tasks;
+            if (!provider) return { data: state.todos, source: 'localStorage' };
+            const result = await provider.getTasks(() => state.todos);
+            frontendApiCache.tasks = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        async function syncEventsFromProvider() {
+            ensureCalendar();
+            const provider = window.lifeOSDataProvider?.events;
+            if (!provider) return { data: state.calendar.events, source: 'localStorage' };
+            const result = await provider.getEvents(() => state.calendar.events);
+            frontendApiCache.events = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        async function syncHealthFromProvider() {
+            const provider = window.lifeOSDataProvider?.health;
+            if (!provider) return { data: [], source: 'localStorage' };
+            const fallback = () => [
+                ...(state.health.bodyRecords || []).map(item => ({ ...item, logType: 'body' })),
+                ...(state.health.meals || []).map(item => ({ ...item, logType: 'meal' })),
+                ...(state.wellbeing.logs || []).map(item => ({ ...item, logType: 'wellbeing' })),
+                {
+                    id: 'local-daily-health',
+                    logType: 'daily_health',
+                    date: todayKey(),
+                    ...state.health
+                }
+            ];
+            const result = await provider.getHealthLogs({}, fallback);
+            frontendApiCache.healthLogs = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        async function syncRoutinesFromProvider() {
+            const provider = window.lifeOSDataProvider?.routines;
+            if (!provider) return { data: [], source: 'localStorage' };
+            const fallback = () => [
+                ...(state.routine || []).map(item => ({ ...item, routineType: 'schedule' })),
+                ...(state.fitness.gym || []).map(item => ({ ...item, routineType: 'gym' })),
+                ...(state.fitness.cardio || []).map(item => ({ ...item, routineType: 'cardio' })),
+                { id: 'local-skincare', routineType: 'skincare', ...state.skincare },
+                {
+                    id: 'local-health-habits',
+                    routineType: 'health_habits',
+                    routinePrintNotes: state.routinePrintNotes
+                }
+            ];
+            const result = await provider.getRoutines({}, fallback);
+            frontendApiCache.routines = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        async function syncCarFromProvider() {
+            const provider = window.lifeOSDataProvider?.car;
+            if (!provider) return { data: state.vehicle, source: 'localStorage' };
+            const result = await provider.getCarBundle(() => state.vehicle);
+            frontendApiCache.car = result.source === 'api' ? result.data : null;
+            return result;
+        }
+        function verifyHealthCarParity() {
+            const health = window.lifeOSHealthCarParity?.buildHealthReport({
+                apiLogs: frontendApiCache.healthLogs || [],
+                apiRoutines: frontendApiCache.routines || [],
+                localState: state
+            });
+            const car = window.lifeOSHealthCarParity?.buildCarReport({
+                apiLogs: frontendApiCache.car?.logs || [],
+                apiReminders: frontendApiCache.car?.reminders || [],
+                apiSummary: frontendApiCache.car?.summary || {},
+                localState: state
+            });
+            const report = { checkedAt: new Date().toISOString(), health, car };
+            console.info('[LifeOS Parity] Salud y coche', {
+                healthMatch: health?.isMatch,
+                healthDifferences: health?.differences?.length || 0,
+                carMatch: car?.isMatch,
+                carDifferences: car?.differences?.length || 0
+            });
+            return report;
+        }
+        window.verifyLifeOSHealthCarParity = verifyHealthCarParity;
+        async function primeFrontendApiBridge() {
+            try {
+                await Promise.all([
+                    syncTasksFromProvider(),
+                    syncEventsFromProvider(),
+                    syncTransactionsFromProvider(),
+                    syncFinanceReferenceData(),
+                    syncHealthFromProvider(),
+                    syncRoutinesFromProvider(),
+                    syncCarFromProvider()
+                ]);
+                renderDashboard();
+                if (document.getElementById('todos')?.classList.contains('active')) renderTodosView();
+                if (document.getElementById('debts')?.classList.contains('active')) renderMovements();
+                if (document.getElementById('routine')?.classList.contains('active')) { renderRoutine(); renderFitnessRoutine(); }
+                if (document.getElementById('health')?.classList.contains('active')) { renderHealth(); renderSkincare(); }
+                if (document.getElementById('wellbeing')?.classList.contains('active')) renderWellbeing();
+                if (document.getElementById('vehicle')?.classList.contains('active')) renderVehicle();
+            } catch (error) {
+                console.warn('[LifeOS Bridge] Los dominios conservan fallback local.', {
+                    code: error.code || 'DOMAIN_PRIME_ERROR'
+                });
+            }
+        }
         function todoPriorityMeta(priority) {
             return priority === 'urgente'
                 ? { label: 'Urgente', color: 'bg-red-500/15 text-red-300 border-red-500/25', rank: 0 }
@@ -7022,16 +8204,17 @@ ${block('Rutina Gym', notes.gym)}
         }
         function sortedTodos() {
             migrateTodoState();
-            return [...state.todos].sort((a, b) =>
+            return [...visibleTodos()].sort((a, b) =>
                 Number(a.done) - Number(b.done) ||
                 todoPriorityMeta(a.priority).rank - todoPriorityMeta(b.priority).rank ||
                 String(a.dueDate || '9999-99-99').localeCompare(String(b.dueDate || '9999-99-99')) ||
                 String(a.text || '').localeCompare(String(b.text || ''))
             );
         }
-        function renderTodos() {
+        function renderTodosView() {
             const list = document.getElementById('todo-list'); list.innerHTML = '';
-            const active = state.todos.filter(t => !t.done);
+            const todos = visibleTodos();
+            const active = todos.filter(t => !t.done);
             const urgent = active.filter(t => t.priority === 'urgente');
             const overdue = active.filter(t => t.dueDate && t.dueDate < todayKey());
             const summary = document.getElementById('todo-summary');
@@ -7053,44 +8236,109 @@ ${block('Rutina Gym', notes.gym)}
                 list.innerHTML += `
                     <div class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100 transition group">
                         <label class="flex items-center cursor-pointer flex-1">
-                            <input type="checkbox" class="w-5 h-5 accent-primary mr-4" ${t.done?'checked':''} onchange="toggleTodo(${t.id})">
+                            <input type="checkbox" class="w-5 h-5 accent-primary mr-4" ${t.done?'checked':''} onchange='toggleTodo(${JSON.stringify(t.id)})'>
                             <span class="${t.done?'text-slate-400 line-through':'text-slate-700'} font-medium">
                                 ${escapeHtml(t.text)}
                                 <span class="ml-2 px-2 py-0.5 rounded-full text-[11px] border ${meta.color}">${meta.label}</span>
                                 ${t.dueDate ? `<span class="ml-2 text-[11px] ${dueClass}"><i class="fa-solid fa-calendar-day mr-1"></i>${formatDateLabel(t.dueDate)}</span>` : ''}
                             </span>
                         </label>
-                        <button onclick="delTodo(${t.id})" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100">
+                            <button onclick='editTodo(${JSON.stringify(t.id)})' class="text-slate-300 hover:text-blue-400"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick='delTodo(${JSON.stringify(t.id)})' class="text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>`;
             });
+            const source = document.getElementById('todos-data-source');
+            if (source) {
+                const fromApi = apiDomainActive('tasks');
+                source.textContent = fromApi ? 'SQLite' : 'localStorage fallback';
+                source.className = `dark-chip rounded-full px-3 py-1 text-xs ${fromApi ? 'text-emerald-300' : 'text-yellow-300'}`;
+            }
         }
-        function addTodo() {
+        async function renderTodos() {
+            await syncTasksFromProvider();
+            renderTodosView();
+        }
+        async function addTodo() {
             const val = document.getElementById('todo-input').value; if(!val) return;
-            state.todos.push({
+            const item = {
                 id: Date.now(),
                 text: val,
                 done: false,
                 priority: document.getElementById('todo-priority')?.value || 'normal',
                 dueDate: readTextInput('todo-due-date'),
                 createdAt: new Date().toISOString()
-            });
-            saveData();
+            };
+            const provider = window.lifeOSDataProvider?.tasks;
+            if (provider) {
+                const result = await provider.createTask(item, () => {
+                    // LEGACY_LOCALSTORAGE_FALLBACK
+                    state.todos.push(item);
+                    saveData();
+                    return item;
+                });
+                if (result.source === 'api') upsertApiCache('tasks', result.data);
+            } else {
+                // LEGACY_LOCALSTORAGE_FALLBACK
+                state.todos.push(item);
+                saveData();
+            }
             document.getElementById('todo-input').value='';
             document.getElementById('todo-due-date').value='';
             document.getElementById('todo-priority').value='normal';
-            renderTodos();
+            await renderTodos();
             refreshPulseIfAvailable();
             if (document.getElementById('calendar')?.classList.contains('active')) renderCalendar();
         }
-        function toggleTodo(id) {
-            const t=state.todos.find(i=>i.id===id);
-            if(t) t.done=!t.done;
-            saveData(); renderTodos(); refreshPulseIfAvailable();
+        async function updateTodoThroughProvider(item) {
+            const provider = window.lifeOSDataProvider?.tasks;
+            if (!provider) return null;
+            return provider.updateTask(item.id, item, () => {
+                // LEGACY_LOCALSTORAGE_FALLBACK
+                const local = state.todos.find(todo => String(todo.id) === String(item.id));
+                if (local) Object.assign(local, item);
+                saveData();
+                return item;
+            });
+        }
+        async function toggleTodo(id) {
+            const current = visibleTodos().find(item => String(item.id) === String(id));
+            if (!current) return;
+            const next = { ...current, done: !current.done };
+            const result = await updateTodoThroughProvider(next);
+            if (result?.source === 'api') upsertApiCache('tasks', result.data);
+            await renderTodos(); refreshPulseIfAvailable();
             if (document.getElementById('calendar')?.classList.contains('active')) renderCalendar();
         }
-        function delTodo(id) {
-            state.todos = state.todos.filter(i=>i.id!==id);
-            saveData(); renderTodos(); refreshPulseIfAvailable();
+        async function editTodo(id) {
+            const current = visibleTodos().find(item => String(item.id) === String(id));
+            if (!current) return;
+            const text = prompt('Editar pendiente', current.text);
+            if (text === null || !text.trim()) return;
+            const dueDate = prompt('Fecha límite (AAAA-MM-DD o vacío)', current.dueDate || '');
+            if (dueDate === null) return;
+            const next = { ...current, text: text.trim(), dueDate: dueDate.trim() };
+            const result = await updateTodoThroughProvider(next);
+            if (result?.source === 'api') upsertApiCache('tasks', result.data);
+            await renderTodos(); refreshPulseIfAvailable();
+        }
+        async function delTodo(id) {
+            const provider = window.lifeOSDataProvider?.tasks;
+            if (provider) {
+                await provider.deleteTask(id, () => {
+                    // LEGACY_LOCALSTORAGE_FALLBACK
+                    state.todos = state.todos.filter(item => String(item.id) !== String(id));
+                    saveData();
+                    return null;
+                });
+            } else {
+                // LEGACY_LOCALSTORAGE_FALLBACK
+                state.todos = state.todos.filter(item => String(item.id) !== String(id));
+                saveData();
+            }
+            frontendApiCache.tasks = (frontendApiCache.tasks || []).filter(item => String(item.id) !== String(id));
+            await renderTodos(); refreshPulseIfAvailable();
             if (document.getElementById('calendar')?.classList.contains('active')) renderCalendar();
         }
 
@@ -7116,7 +8364,7 @@ ${block('Rutina Gym', notes.gym)}
         }
         function sortedBaseCalendarEvents() {
             ensureCalendar();
-            return [...state.calendar.events].sort((a, b) =>
+            return [...visibleCalendarEvents()].sort((a, b) =>
                 String(a.date || '').localeCompare(String(b.date || '')) ||
                 String(a.startTime || '').localeCompare(String(b.startTime || '')) ||
                 String(a.title || '').localeCompare(String(b.title || ''))
@@ -7181,7 +8429,7 @@ ${block('Rutina Gym', notes.gym)}
         function getLinkedCalendarEvents(startDate = todayKey(), endDate = addDaysToDateKey(todayKey(), 60)) {
             const events = [];
             migrateTodoState();
-            state.todos.filter(todo => !todo.done && todo.dueDate && todo.dueDate >= startDate && todo.dueDate <= endDate).forEach(todo => {
+            visibleTodos().filter(todo => !todo.done && todo.dueDate && todo.dueDate >= startDate && todo.dueDate <= endDate).forEach(todo => {
                 events.push(linkedEvent(`todo-${todo.id}`, todo.dueDate, 'Pendiente', todo.text, 'todos', {
                     notes: todo.priority === 'urgente' ? 'Pendiente urgente' : 'Pendiente no urgente',
                     source: 'todo'
@@ -7240,7 +8488,7 @@ ${block('Rutina Gym', notes.gym)}
                 !event.done && (event.date >= today || (event.linked && ['todo', 'debt', 'subscription'].includes(event.source)))
             );
         }
-        function renderCalendar() {
+        function renderCalendarView() {
             ensureCalendar();
             const monthInput = document.getElementById('calendar-month');
             if (monthInput && !monthInput.value) monthInput.value = todayKey().slice(0, 7);
@@ -7271,6 +8519,10 @@ ${block('Rutina Gym', notes.gym)}
 
             renderCalendarGrid(month, monthEvents);
             renderCalendarList(events);
+        }
+        async function renderCalendar() {
+            await syncEventsFromProvider();
+            renderCalendarView();
         }
         function renderCalendarGrid(month, monthEvents) {
             const [year, monthNum] = month.split('-').map(Number);
@@ -7325,7 +8577,7 @@ ${block('Rutina Gym', notes.gym)}
                         ${event.linked ? `<button onclick="navigate('${event.target || 'dashboard'}')" class="dark-chip px-3 py-2 rounded-lg text-xs hover:bg-slate-700">Abrir sección</button>` : `<button onclick='toggleCalendarDone(${JSON.stringify(event.occurrenceOf || event.id)})' class="dark-chip px-3 py-2 rounded-lg text-xs hover:bg-slate-700">${event.done ? 'Reabrir' : 'Hecho'}</button>`}
                         <button onclick='downloadCalendarEventIcs(${JSON.stringify(event.id)})' class="dark-chip px-3 py-2 rounded-lg text-xs hover:bg-slate-700">.ics</button>
                         <a href="${googleCalendarUrl(event)}" target="_blank" rel="noopener noreferrer" class="dark-chip px-3 py-2 rounded-lg text-xs hover:bg-slate-700">Google</a>
-                        ${event.linked ? '' : `<button onclick='deleteCalendarEvent(${JSON.stringify(event.occurrenceOf || event.id)})' class="dark-chip px-3 py-2 rounded-lg text-xs text-red-300 hover:bg-red-500/20"><i class="fa-solid fa-trash"></i></button>`}
+                        ${event.linked ? '' : `<button onclick='editCalendarEvent(${JSON.stringify(event.occurrenceOf || event.id)})' class="dark-chip px-3 py-2 rounded-lg text-xs hover:bg-slate-700"><i class="fa-solid fa-pen"></i></button><button onclick='deleteCalendarEvent(${JSON.stringify(event.occurrenceOf || event.id)})' class="dark-chip px-3 py-2 rounded-lg text-xs text-red-300 hover:bg-red-500/20"><i class="fa-solid fa-trash"></i></button>`}
                     </div>
                 </div>
             `).join('');
@@ -7335,13 +8587,13 @@ ${block('Rutina Gym', notes.gym)}
             document.getElementById('calendar-repeat-interval')?.classList.toggle('hidden', repeat !== 'interval');
             document.getElementById('calendar-repeat-until')?.classList.toggle('hidden', repeat === 'none');
         }
-        function addCalendarEvent() {
+        async function addCalendarEvent() {
             ensureCalendar();
             const date = readTextInput('calendar-date');
             const title = readTextInput('calendar-title');
             if (!date || !title) return alert('Agrega fecha y título.');
             const recurrence = document.getElementById('calendar-repeat')?.value || 'none';
-            state.calendar.events.push({
+            const item = {
                 id: Date.now(),
                 date,
                 startTime: readTextInput('calendar-start'),
@@ -7356,26 +8608,75 @@ ${block('Rutina Gym', notes.gym)}
                 recurrenceIntervalDays: recurrence === 'interval' ? readNumberInput('calendar-repeat-interval', 1) : '',
                 recurrenceUntil: recurrence === 'none' ? '' : readTextInput('calendar-repeat-until'),
                 createdAt: new Date().toISOString()
-            });
-            saveData();
+            };
+            const provider = window.lifeOSDataProvider?.events;
+            if (provider) {
+                const result = await provider.createEvent(item, () => {
+                    // LEGACY_LOCALSTORAGE_FALLBACK
+                    state.calendar.events.push(item);
+                    saveData();
+                    return item;
+                });
+                if (result.source === 'api') upsertApiCache('events', result.data);
+            } else {
+                // LEGACY_LOCALSTORAGE_FALLBACK
+                state.calendar.events.push(item);
+                saveData();
+            }
             resetInputs(['calendar-title', 'calendar-start', 'calendar-end', 'calendar-location', 'calendar-notes', 'calendar-repeat-interval', 'calendar-repeat-until']);
             document.getElementById('calendar-repeat').value = 'none';
             toggleCalendarRepeatFields();
-            renderCalendar();
+            await renderCalendar();
             refreshPulseIfAvailable();
         }
-        function toggleCalendarDone(id) {
-            const event = state.calendar.events.find(item => String(item.id) === String(id));
-            if (event) event.done = !event.done;
-            saveData();
-            renderCalendar();
+        async function updateEventThroughProvider(item) {
+            const provider = window.lifeOSDataProvider?.events;
+            if (!provider) return null;
+            return provider.updateEvent(item.id, item, () => {
+                // LEGACY_LOCALSTORAGE_FALLBACK
+                const local = state.calendar.events.find(event => String(event.id) === String(item.id));
+                if (local) Object.assign(local, item);
+                saveData();
+                return item;
+            });
+        }
+        async function toggleCalendarDone(id) {
+            const current = visibleCalendarEvents().find(item => String(item.id) === String(id));
+            if (!current) return;
+            const result = await updateEventThroughProvider({ ...current, done: !current.done });
+            if (result?.source === 'api') upsertApiCache('events', result.data);
+            await renderCalendar();
             refreshPulseIfAvailable();
         }
-        function deleteCalendarEvent(id) {
+        async function editCalendarEvent(id) {
+            const current = visibleCalendarEvents().find(item => String(item.id) === String(id));
+            if (!current) return;
+            const title = prompt('Editar evento', current.title);
+            if (title === null || !title.trim()) return;
+            const date = prompt('Fecha (AAAA-MM-DD)', current.date);
+            if (date === null || !date.trim()) return;
+            const result = await updateEventThroughProvider({ ...current, title: title.trim(), date: date.trim() });
+            if (result?.source === 'api') upsertApiCache('events', result.data);
+            await renderCalendar();
+            refreshPulseIfAvailable();
+        }
+        async function deleteCalendarEvent(id) {
             if (!confirm('¿Borrar este evento?')) return;
-            state.calendar.events = state.calendar.events.filter(item => String(item.id) !== String(id));
-            saveData();
-            renderCalendar();
+            const provider = window.lifeOSDataProvider?.events;
+            if (provider) {
+                await provider.deleteEvent(id, () => {
+                    // LEGACY_LOCALSTORAGE_FALLBACK
+                    state.calendar.events = state.calendar.events.filter(item => String(item.id) !== String(id));
+                    saveData();
+                    return null;
+                });
+            } else {
+                // LEGACY_LOCALSTORAGE_FALLBACK
+                state.calendar.events = state.calendar.events.filter(item => String(item.id) !== String(id));
+                saveData();
+            }
+            frontendApiCache.events = (frontendApiCache.events || []).filter(item => String(item.id) !== String(id));
+            await renderCalendar();
             refreshPulseIfAvailable();
         }
         function focusCalendarEvent(id) {
@@ -8380,7 +9681,7 @@ ${block('Rutina Gym', notes.gym)}
         }
         function wellbeingLogsSorted(desc = false) {
             ensureWellbeing();
-            const logs = [...state.wellbeing.logs].sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+            const logs = [...visibleWellbeingState().logs].sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
             return desc ? logs.reverse() : logs;
         }
         function getWellbeingFilteredLogs() {
@@ -8398,7 +9699,7 @@ ${block('Rutina Gym', notes.gym)}
             const start = new Date(parseDateKey(today));
             start.setDate(start.getDate() - (days - 1));
             const startKey = dateKeyFromDate(start);
-            const logs = state.wellbeing.logs.filter(log => log.date >= startKey && log.date <= today);
+            const logs = visibleWellbeingState().logs.filter(log => log.date >= startKey && log.date <= today);
             const sorted = [...logs].sort((a, b) => {
                 const aScore = Number(a.mood || 0) + Number(a.energy || 0) - Number(a.stress || 0);
                 const bScore = Number(b.mood || 0) + Number(b.energy || 0) - Number(b.stress || 0);
@@ -8451,8 +9752,8 @@ ${block('Rutina Gym', notes.gym)}
                     <td class="p-3 text-slate-500">${escapeHtml(log.notes || '')}</td>
                     <td class="p-3 text-center">
                         <div class="flex justify-center gap-2">
-                            <button onclick="editWellbeingLog(${log.id})" class="text-slate-400 hover:text-blue-400"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteWellbeingLog(${log.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick='editWellbeingLog(${JSON.stringify(log.id)})' class="text-slate-400 hover:text-blue-400"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick='deleteWellbeingLog(${JSON.stringify(log.id)})' class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -8489,13 +9790,14 @@ ${block('Rutina Gym', notes.gym)}
             document.getElementById('wellbeing-date').value = todayKey();
             document.getElementById('wellbeing-sleep').focus();
         }
-        function saveWellbeingLog() {
+        async function saveWellbeingLog() {
+            if (!guardHealthWrite()) return;
             ensureWellbeing();
             const date = readTextInput('wellbeing-date');
             const sleepHours = readNumberInput('wellbeing-sleep', null);
             if (!date || sleepHours === null || sleepHours <= 0) return alert('Agrega fecha y horas de sueño válidas.');
-            const editId = Number(readTextInput('wellbeing-edit-id'));
-            const duplicate = state.wellbeing.logs.find(log => log.date === date && log.id !== editId);
+            const editId = readTextInput('wellbeing-edit-id');
+            const duplicate = visibleWellbeingState().logs.find(log => log.date === date && String(log.id) !== String(editId || ''));
             if (duplicate) return alert('Ya existe un registro para esa fecha. Edítalo desde el historial.');
             const payload = {
                 date,
@@ -8506,16 +9808,32 @@ ${block('Rutina Gym', notes.gym)}
                 stress: readNumberInput('wellbeing-stress', 3),
                 notes: readTextInput('wellbeing-notes')
             };
-            const existing = state.wellbeing.logs.find(log => log.id === editId);
-            if (existing) Object.assign(existing, payload);
-            else state.wellbeing.logs.push({ id: Date.now(), ...payload });
-            saveData();
-            cancelWellbeingEdit(false);
-            renderWellbeing();
-            refreshPulseIfAvailable();
+            const existing = visibleWellbeingState().logs.find(log => String(log.id) === String(editId));
+            try {
+                const provider = window.lifeOSDataProvider?.health;
+                const item = { ...(existing || {}), ...payload, id: existing?.id || Date.now(), logType: 'wellbeing' };
+                const result = existing
+                    ? await provider.updateHealthLog(existing.id, item, () => {
+                        const local = state.wellbeing.logs.find(log => String(log.id) === String(editId));
+                        if (local) Object.assign(local, payload);
+                        saveData();
+                        return item;
+                    })
+                    : await provider.createHealthLog(item, () => {
+                        state.wellbeing.logs.push(item);
+                        saveData();
+                        return item;
+                    });
+                if (result.source === 'api') upsertApiCache('healthLogs', result.data);
+                cancelWellbeingEdit(false);
+                renderWellbeing();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar sueño/ánimo.');
+            }
         }
         function editWellbeingLog(id) {
-            const log = state.wellbeing.logs.find(item => item.id === id);
+            const log = visibleWellbeingState().logs.find(item => String(item.id) === String(id));
             if (!log) return;
             document.getElementById('wellbeing-edit-id').value = log.id;
             document.getElementById('wellbeing-date').value = log.date || todayKey();
@@ -8544,12 +9862,22 @@ ${block('Rutina Gym', notes.gym)}
             document.getElementById('wellbeing-cancel-btn').classList.add('hidden');
             if (render) renderWellbeing();
         }
-        function deleteWellbeingLog(id) {
+        async function deleteWellbeingLog(id) {
+            if (!guardHealthWrite()) return;
             if (!confirm('¿Borrar este registro de sueño/ánimo?')) return;
-            state.wellbeing.logs = state.wellbeing.logs.filter(log => log.id !== id);
-            saveData();
-            renderWellbeing();
-            refreshPulseIfAvailable();
+            try {
+                const provider = window.lifeOSDataProvider?.health;
+                await provider.deleteHealthLog(id, () => {
+                    state.wellbeing.logs = state.wellbeing.logs.filter(log => String(log.id) !== String(id));
+                    saveData();
+                });
+                frontendApiCache.healthLogs = (frontendApiCache.healthLogs || [])
+                    .filter(item => String(item.id) !== String(id));
+                renderWellbeing();
+                refreshPulseIfAvailable();
+            } catch (error) {
+                alert(error.message || 'No se pudo borrar sueño/ánimo.');
+            }
         }
         function clearWellbeingFilter() {
             document.getElementById('wellbeing-filter-month').value = '';
@@ -8978,7 +10306,7 @@ ${block('Rutina Gym', notes.gym)}
         }
         function renderVehicleQuickSettings() {
             ensureVehicle();
-            const p = state.vehicle.profile;
+            const p = visibleVehicleState().profile;
             const currentKm = getCurrentVehicleKm();
             const currentKmInput = document.getElementById('vehicle-settings-current-km');
             const lastDateInput = document.getElementById('vehicle-settings-last-service-date');
@@ -8995,9 +10323,10 @@ ${block('Rutina Gym', notes.gym)}
                 msg.className = `text-sm ${alert.level === 'urgent' ? 'text-red-500' : alert.level === 'warning' ? 'text-yellow-600' : 'text-slate-500'}`;
             }
         }
-        function saveVehicleQuickSettings() {
+        async function saveVehicleQuickSettings() {
+            if (!guardCarWrite()) return;
             ensureVehicle();
-            const p = state.vehicle.profile;
+            const p = cloneData(visibleVehicleState().profile);
             p.currentKm = Math.max(0, readNumberInput('vehicle-settings-current-km', p.currentKm || 0));
             p.lastServiceDate = readTextInput('vehicle-settings-last-service-date');
             p.lastServiceKm = Math.max(0, readNumberInput('vehicle-settings-last-service-km', p.lastServiceKm || 0));
@@ -9006,15 +10335,28 @@ ${block('Rutina Gym', notes.gym)}
             p.warningKm = 9000;
             p.serviceIntervalMonths = 6;
             p.warningMonths = 5;
-            saveData();
-            renderVehicleQuickSettings();
-            renderDashboard();
+            try {
+                const provider = window.lifeOSDataProvider?.car;
+                const result = await provider.updateCarProfile(p, () => {
+                    state.vehicle.profile = p;
+                    saveData();
+                    return p;
+                });
+                if (result.source === 'api' && frontendApiCache.car) {
+                    frontendApiCache.car.summary.profile = result.data;
+                }
+                renderVehicleQuickSettings();
+                renderDashboard();
+            } catch (error) {
+                alert(error.message || 'No se pudo guardar la configuración del coche.');
+            }
         }
         function renderSettings() {
             document.getElementById('set-target-income').value = state.config.targetIncome;
             document.getElementById('set-target-expense').value = state.config.targetExpense;
             renderCalendarImportStatus();
             renderVehicleQuickSettings();
+            renderFinanceApiWriteSettings();
             const backupMsg = document.getElementById('backup-msg');
             if (backupMsg) {
                 backupMsg.textContent = state.config.lastBackupAt
@@ -9023,6 +10365,27 @@ ${block('Rutina Gym', notes.gym)}
             }
             const pwaMsg = document.getElementById('pwa-update-msg');
             if (pwaMsg) pwaMsg.textContent = `Versión local: ${LIFEOS_APP_VERSION}. Si la app instalada no cambia, abre desde localhost y pulsa Forzar actualización.`;
+        }
+        function renderFinanceApiWriteSettings() {
+            const enabled = Boolean(window.LIFE_OS_FINANCE_WRITE_FLAGS?.useApiForTransactionWrites);
+            const toggle = document.getElementById('finance-api-write-toggle');
+            const status = document.getElementById('finance-api-write-status');
+            if (toggle) toggle.checked = enabled;
+            if (status) {
+                status.textContent = enabled
+                    ? 'Activa. Los movimientos se escriben únicamente en SQLite cuando Finanzas usa la API.'
+                    : 'Desactivada. La lectura API continúa funcionando.';
+                status.className = `text-sm ${enabled ? 'text-emerald-600' : 'text-yellow-600'}`;
+            }
+        }
+        function toggleFinanceApiWrites(enabled) {
+            if (enabled && !confirm('Activa este modo solo después de verificar paridad financiera. Las escrituras irán a SQLite y no se duplicarán en localStorage.')) {
+                renderFinanceApiWriteSettings();
+                return;
+            }
+            window.setLifeOSFinanceWriteFlag?.('useApiForTransactionWrites', enabled);
+            renderFinanceApiWriteSettings();
+            if (document.getElementById('debts')?.classList.contains('active')) renderMovements();
         }
         function saveSettings() {
             state.config.targetIncome = parseFloat(document.getElementById('set-target-income').value);

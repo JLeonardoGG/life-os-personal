@@ -1,4 +1,20 @@
 import { LifeOSApi } from './api.js';
+import {
+    checkBackendStatus,
+    getBackendStatus,
+    initializeBackendStatus,
+} from '../../assets/js/core/backendStatus.js';
+import { dataProvider } from '../../assets/js/core/dataProvider.js';
+import {
+    FEATURE_FLAGS,
+    FINANCE_WRITE_FLAGS,
+    HEALTH_CAR_WRITE_FLAGS,
+    setFinanceWriteFlag,
+    setHealthCarWriteFlag,
+} from '../../assets/js/core/featureFlags.js';
+import { dashboardBridge } from '../../assets/js/domains/dashboardBridge.js';
+import { financeParity } from '../../assets/js/domains/financeParity.js';
+import { healthCarParity } from '../../assets/js/domains/healthCarParity.js';
 
 const api = new LifeOSApi();
 const PHOTO_DB_NAME = 'lifeos_photo_db_v1';
@@ -129,17 +145,24 @@ async function bootstrap() {
         setStatus('Abre Life OS desde http://127.0.0.1:8765 para usar el backend.', 'text-yellow-500');
         return;
     }
-    try {
-        await api.createSession();
-        const health = await api.health();
-        setStatus(
-            `Backend V1 activo · SQLite OK · IA ${health.ai_enabled ? 'habilitada' : 'desactivada'}.`,
-            'text-emerald-500',
-        );
-    } catch (error) {
-        setStatus(`Backend no disponible: ${error.message}`, 'text-red-500');
-    }
+    initializeBackendStatus();
 }
 
 window.lifeOSApi = api;
+window.lifeOSBackend = {
+    check: checkBackendStatus,
+    getStatus: getBackendStatus,
+};
+window.lifeOSDataProvider = dataProvider;
+window.lifeOSDashboardBridge = dashboardBridge;
+window.lifeOSFinanceParity = financeParity;
+window.lifeOSHealthCarParity = healthCarParity;
+window.LIFE_OS_FEATURE_FLAGS = FEATURE_FLAGS;
+window.LIFE_OS_FINANCE_WRITE_FLAGS = FINANCE_WRITE_FLAGS;
+window.LIFE_OS_HEALTH_CAR_WRITE_FLAGS = HEALTH_CAR_WRITE_FLAGS;
+window.setLifeOSFinanceWriteFlag = setFinanceWriteFlag;
+window.setLifeOSHealthCarWriteFlag = setHealthCarWriteFlag;
+window.setLifeOSHealthWriteFlag = (flag, enabled) => setHealthCarWriteFlag(flag, enabled);
+window.setLifeOSRoutineWriteFlag = (flag, enabled) => setHealthCarWriteFlag(flag, enabled);
+window.setLifeOSCarWriteFlag = (flag, enabled) => setHealthCarWriteFlag(flag, enabled);
 window.addEventListener('DOMContentLoaded', bootstrap);

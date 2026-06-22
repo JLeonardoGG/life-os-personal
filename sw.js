@@ -1,7 +1,7 @@
-const CACHE_NAME = 'lifeos-personal-v27';
+const CACHE_NAME = 'lifeos-personal-v31';
 const HTML_CACHE_KEY = './lifeos_dashboard.html';
 const APP_SHELL = [
-  './lifeos_dashboard.html?v=v27-local-backend',
+  './lifeos_dashboard.html?v=v31-health-car-sqlite',
   './manifest.webmanifest',
   './lifeos-icon.svg',
   './frontend/assets/app.css',
@@ -16,7 +16,14 @@ const APP_SHELL = [
   './frontend/assets/vendor/fontawesome/webfonts/fa-solid-900.woff2',
   './frontend/assets/vendor/fontawesome/webfonts/fa-v4compatibility.woff2',
   './frontend/js/core/api.js',
-  './frontend/js/core/bootstrap.js'
+  './frontend/js/core/bootstrap.js',
+  './frontend/assets/js/core/apiClient.js',
+  './frontend/assets/js/core/backendStatus.js',
+  './frontend/assets/js/core/dataProvider.js',
+  './frontend/assets/js/core/featureFlags.js',
+  './frontend/assets/js/domains/dashboardBridge.js',
+  './frontend/assets/js/domains/financeParity.js',
+  './frontend/assets/js/domains/healthCarParity.js'
 ];
 
 self.addEventListener('install', event => {
@@ -49,6 +56,11 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   const isHtml = event.request.mode === 'navigate' || url.pathname.endsWith('/lifeos_dashboard.html');
 
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    return;
+  }
+
   if (isHtml) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
@@ -57,7 +69,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(HTML_CACHE_KEY, copy));
           return response;
         })
-        .catch(() => caches.match(HTML_CACHE_KEY).then(cached => cached || caches.match('./lifeos_dashboard.html?v=v27-local-backend')))
+        .catch(() => caches.match(HTML_CACHE_KEY).then(cached => cached || caches.match('./lifeos_dashboard.html?v=v31-health-car-sqlite')))
     );
     return;
   }

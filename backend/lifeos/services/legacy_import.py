@@ -37,6 +37,7 @@ from lifeos.serializers import to_cents
 from lifeos.services.files import store_uploaded_bytes
 
 MEXICO_CITY = ZoneInfo("America/Mexico_City")
+IMPORTER_VERSION = "v4-health-car"
 
 
 def canonical_hash(payload: dict[str, Any]) -> str:
@@ -60,12 +61,15 @@ def _date(value: Any, fallback: date | None = None) -> date:
 
 def _datetime(value: Any, fallback: datetime | None = None) -> datetime:
     if isinstance(value, datetime):
-        return value
-    try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-        return parsed if parsed.tzinfo else parsed.replace(tzinfo=MEXICO_CITY)
-    except (TypeError, ValueError):
-        return fallback or datetime.now(UTC)
+        parsed = value
+    else:
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            parsed = fallback or datetime.now(UTC)
+    if not parsed.tzinfo:
+        parsed = parsed.replace(tzinfo=MEXICO_CITY)
+    return parsed.astimezone(UTC)
 
 
 def _legacy_key(domain: str, item: Any, index: int = 0) -> str:
@@ -81,6 +85,33 @@ def _exists(db: Session, model, legacy_key: str) -> bool:
     return db.scalar(select(model.id).where(model.legacy_key == legacy_key)) is not None
 
 
+def _versioned_payload_hash(payload: dict[str, Any]) -> str:
+    return canonical_hash({"importer_version": IMPORTER_VERSION, "payload": payload})
+
+
+def _duplicate_count(items: list[Any]) -> int:
+    seen: set[str] = set()
+    duplicates = 0
+    for item in items:
+        if isinstance(item, dict) and (
+            item.get("id") or item.get("uuid") or item.get("externalId")
+        ):
+            key = str(item.get("id") or item.get("uuid") or item.get("externalId"))
+        else:
+            key = canonical_hash({"item": item})
+        if key in seen:
+            duplicates += 1
+        seen.add(key)
+    return duplicates
+
+
+def _has_daily_health(health: dict[str, Any]) -> bool:
+    return any(
+        key in health
+        for key in ("calories", "water", "activity", "macros", "goals")
+    )
+
+
 def preview_legacy_import(payload: dict[str, Any]) -> dict[str, Any]:
     state = _state(payload)
     finance = state.get("finance") or {}
@@ -89,8 +120,33 @@ def preview_legacy_import(payload: dict[str, Any]) -> dict[str, Any]:
     vehicle = state.get("vehicle") or {}
     fitness = state.get("fitness") or {}
     health = state.get("health") or {}
+    wellbeing_logs = (state.get("wellbeing") or {}).get("logs") or []
+    meals = health.get("meals") or []
+    routine_notes = state.get("routinePrintNotes") or {}
+    vitamins = state.get("vitamins") or {}
+    routine_count = (
+        len(state.get("routine") or [])
+        + len(fitness.get("gym") or [])
+        + len(fitness.get("cardio") or [])
+        + (1 if state.get("skincare") else 0)
+        + (1 if routine_notes or vitamins else 0)
+    )
+    health_count = (
+        len(health.get("bodyRecords") or [])
+        + len(wellbeing_logs)
+        + len(meals)
+        + (1 if _has_daily_health(health) else 0)
+    )
+    car_collections = [
+        vehicle.get("kmLogs") or [],
+        vehicle.get("services") or [],
+        vehicle.get("maintenanceLogs") or [],
+    ]
+    inferred_meal_dates = sum(1 for item in meals if not item.get("date"))
     return {
-        "payload_hash": canonical_hash(payload),
+        "payload_hash": _versioned_payload_hash(payload),
+        "source_payload_hash": canonical_hash(payload),
+        "importer_version": IMPORTER_VERSION,
         "mode": "preview",
         "counts": {
             "transactions": len(state.get("movements") or []),
@@ -100,16 +156,15 @@ def preview_legacy_import(payload: dict[str, Any]) -> dict[str, Any]:
             "debts": len((state.get("debtLedger") or {}).get("entities") or []),
             "tasks": len(state.get("todos") or []),
             "events": len((state.get("calendar") or {}).get("events") or []),
-            "routines": len(state.get("routine") or [])
-            + len(fitness.get("gym") or [])
-            + len(fitness.get("cardio") or []),
-            "health_logs": len(health.get("bodyRecords") or [])
-            + len((state.get("wellbeing") or {}).get("logs") or []),
+            "routines": routine_count,
+            "health_logs": health_count,
             "academic_courses": len(academic.get("courses") or []),
             "projects": len(academic.get("projects") or []),
             "car_logs": len(vehicle.get("kmLogs") or [])
             + len(vehicle.get("services") or [])
             + len(vehicle.get("maintenanceLogs") or []),
+            "car_reminders": len(vehicle.get("obligations") or {}),
+            "vehicle_profiles": 1 if vehicle.get("profile") else 0,
             "tax_documents": len(tax.get("cfdi") or []) + len(tax.get("retentions") or []),
             "tax_entries": len(tax.get("incomes") or [])
             + len(tax.get("expenses") or [])
@@ -120,9 +175,47 @@ def preview_legacy_import(payload: dict[str, Any]) -> dict[str, Any]:
         "excluded": {
             "credentials": len((state.get("credentials") or {}).get("entries") or []),
         },
+        "field_report": {
+            "health": {
+                "body_records": len(health.get("bodyRecords") or []),
+                "wellbeing_logs": len(wellbeing_logs),
+                "meals": len(meals),
+                "daily_snapshot": 1 if _has_daily_health(health) else 0,
+                "meal_dates_inferred": inferred_meal_dates,
+            },
+            "routines": {
+                "schedule": len(state.get("routine") or []),
+                "gym": len(fitness.get("gym") or []),
+                "cardio": len(fitness.get("cardio") or []),
+                "skincare": 1 if state.get("skincare") else 0,
+                "health_habits": 1 if routine_notes or vitamins else 0,
+            },
+            "car": {
+                "logs": sum(len(items) for items in car_collections),
+                "reminders": len(vehicle.get("obligations") or {}),
+                "profile": 1 if vehicle.get("profile") else 0,
+            },
+            "duplicate_candidates": {
+                "health": _duplicate_count(
+                    (health.get("bodyRecords") or []) + wellbeing_logs + meals
+                ),
+                "routines": _duplicate_count(
+                    (state.get("routine") or [])
+                    + (fitness.get("gym") or [])
+                    + (fitness.get("cardio") or [])
+                ),
+                "car": sum(_duplicate_count(items) for items in car_collections),
+            },
+            "unmapped": [],
+        },
         "warnings": [
             "Las credenciales y contrasenas no se migran.",
             "localStorage e IndexedDB no se modifican durante la importacion.",
+            (
+                f"{inferred_meal_dates} comida(s) sin fecha usaran la fecha del respaldo."
+                if inferred_meal_dates
+                else "No fue necesario inferir fechas de comidas."
+            ),
         ],
     }
 
@@ -151,6 +244,7 @@ def commit_legacy_import(
         }
 
     state = _state(payload)
+    snapshot_date = _date(payload.get("exportedAt") or payload.get("exported_at"))
     sanitized_state = json.loads(json.dumps(state))
     sanitized_state.pop("credentials", None)
     counters: dict[str, dict[str, int]] = defaultdict(lambda: {"inserted": 0, "existing": 0})
@@ -254,6 +348,7 @@ def commit_legacy_import(
                 legacy_key=debt_key,
                 entity=entity.get("name") or "Entidad",
                 direction="receivable" if balance > 0 else "owed",
+                initial_amount_cents=abs(balance),
                 current_amount_cents=abs(balance),
                 archived=bool(entity.get("archived")),
                 notes=entity.get("notes") or "",
@@ -354,6 +449,23 @@ def commit_legacy_import(
             "routines:skincare",
             {"id": "skincare"},
         )
+    routine_notes = state.get("routinePrintNotes") or {}
+    vitamins = state.get("vitamins") or {}
+    if routine_notes or vitamins:
+        add(
+            Routine,
+            Routine(
+                routine_type="health_habits",
+                name="Hábitos de salud",
+                schedule={},
+                details={
+                    "routinePrintNotes": routine_notes,
+                    "vitamins": vitamins,
+                },
+            ),
+            "routines:health-habits",
+            {"id": "health-habits"},
+        )
 
     health = state.get("health") or {}
     for index, item in enumerate(health.get("bodyRecords") or []):
@@ -371,13 +483,59 @@ def commit_legacy_import(
             item,
             index,
         )
+    if _has_daily_health(health):
+        daily_details = {
+            "date": snapshot_date.isoformat(),
+            "calories": health.get("calories") or {},
+            "water": health.get("water") or {},
+            "activity": health.get("activity") or {},
+            "macros": health.get("macros") or {},
+            "goals": health.get("goals") or {},
+        }
+        add(
+            HealthLog,
+            HealthLog(
+                log_type="daily_health",
+                recorded_at=_datetime(f"{snapshot_date.isoformat()}T12:00:00"),
+                value=float((health.get("water") or {}).get("current") or 0),
+                unit="glasses",
+                details=daily_details,
+            ),
+            "health:daily",
+            {"id": snapshot_date.isoformat()},
+        )
+    for index, item in enumerate(health.get("meals") or []):
+        meal_date = _date(item.get("date"), snapshot_date)
+        details = {
+            **item,
+            "date": meal_date.isoformat(),
+            "inferredDate": not bool(item.get("date")),
+        }
+        add(
+            HealthLog,
+            HealthLog(
+                log_type="meal",
+                recorded_at=_datetime(f"{meal_date.isoformat()}T12:00:00"),
+                value=None,
+                unit="",
+                notes=item.get("desc") or "",
+                details=details,
+            ),
+            "health:meals",
+            item,
+            index,
+        )
     for index, item in enumerate((state.get("wellbeing") or {}).get("logs") or []):
         add(
             HealthLog,
             HealthLog(
                 log_type="wellbeing",
                 recorded_at=_datetime(f"{_date(item.get('date')).isoformat()}T12:00:00"),
-                value=float(item.get("sleep")) if item.get("sleep") not in (None, "") else None,
+                value=(
+                    float(item.get("sleepHours", item.get("sleep")))
+                    if item.get("sleepHours", item.get("sleep")) not in (None, "")
+                    else None
+                ),
                 unit="hours",
                 notes=item.get("notes") or "",
                 details=item,
@@ -435,6 +593,22 @@ def commit_legacy_import(
         )
 
     vehicle = state.get("vehicle") or {}
+    vehicle_profile = vehicle.get("profile") or {}
+    if vehicle_profile:
+        profile_setting = db.scalar(
+            select(AppSetting).where(AppSetting.key == "vehicle_profile")
+        )
+        if profile_setting:
+            counters["app_settings"]["existing"] += 1
+        else:
+            db.add(
+                AppSetting(
+                    key="vehicle_profile",
+                    value=vehicle_profile,
+                    legacy_key="legacy:vehicle:profile",
+                )
+            )
+            counters["app_settings"]["inserted"] += 1
     for collection, log_type in (
         ("kmLogs", "odometer"),
         ("services", "service"),
@@ -457,17 +631,48 @@ def commit_legacy_import(
             )
     obligations = vehicle.get("obligations") or {}
     for key, item in obligations.items():
-        add(
-            CarReminder,
-            CarReminder(
-                reminder_type=key,
-                title=item.get("label") or key,
-                recurrence="yearly",
-                details=item,
-            ),
-            "car:reminders",
-            {"id": key},
+        due_date = None
+        status_value = "pending"
+        if key == "verificacion":
+            months = [int(month) for month in item.get("months") or []]
+            pending_dates = []
+            for month in months:
+                period = f"{snapshot_date.year}-{month:02d}"
+                if period not in (item.get("donePeriods") or []):
+                    pending_dates.append(date(snapshot_date.year, month, 1))
+            due_date = min(pending_dates) if pending_dates else None
+            status_value = "done" if months and not pending_dates else "pending"
+        else:
+            month = int(item.get("month") or 0)
+            if 1 <= month <= 12:
+                due_date = date(snapshot_date.year, month, 1)
+            status_value = (
+                "done"
+                if str(snapshot_date.year) in (item.get("doneYears") or [])
+                else "pending"
+            )
+        reminder_key = _legacy_key("car:reminders", {"id": key})
+        existing_reminder = db.scalar(
+            select(CarReminder).where(CarReminder.legacy_key == reminder_key)
         )
+        if existing_reminder:
+            existing_reminder.due_date = existing_reminder.due_date or due_date
+            existing_reminder.status = status_value
+            existing_reminder.details = item
+            counters["car_reminders"]["existing"] += 1
+        else:
+            db.add(
+                CarReminder(
+                    legacy_key=reminder_key,
+                    reminder_type=key,
+                    title=item.get("label") or key,
+                    due_date=due_date,
+                    recurrence="yearly",
+                    status=status_value,
+                    details=item,
+                )
+            )
+            counters["car_reminders"]["inserted"] += 1
 
     tax = state.get("uberTax") or {}
     for collection, document_kind in (("cfdi", "cfdi"), ("retentions", "retention")):

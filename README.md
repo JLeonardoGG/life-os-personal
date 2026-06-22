@@ -4,6 +4,8 @@ Aplicacion local-first para organizar finanzas, tareas, salud, rutina, documento
 
 > **English summary:** Life OS Personal is a privacy-focused, local-first personal operations platform. It combines a PWA frontend with a FastAPI/SQLite backend, gradual legacy-data migration, automatic backups, reviewed automation inboxes and optional local AI contracts.
 
+![Life OS](docs/assets/screenshot.png)
+
 ## Por que existe
 
 Life OS concentra informacion que normalmente queda dispersa en hojas de calculo, notas y calendarios:
@@ -41,7 +43,7 @@ Requisitos: Python 3.12, Node.js y pnpm.
 
 ```bash
 git clone https://github.com/JLeonardoGG/life-os-personal.git
-cd life-os
+cd life-os-personal
 ./scripts/install-local.command
 ```
 
@@ -95,6 +97,9 @@ En **Opciones > Backend local Life OS V1**:
 
 La boveda heredada de contrasenas no se envia ni se migra. Consulta [Migracion](docs/MIGRATION.md).
 
+Salud, rutinas y coche ya cuentan con lectura SQLite, fallback local, paridad e interfaces de
+escritura experimental. Sus flags permanecen apagados hasta validar la migracion personal.
+
 ## Automatizaciones
 
 `POST /api/inbox/message` recibe texto, propone una clasificacion y lo deja en `pending_review`. Ningun gasto, tarea o evento se crea hasta confirmar el mensaje.
@@ -123,6 +128,10 @@ Genera una base separada en `demo/lifeos-demo.db`. Nunca escribe sobre la base p
 - `scripts/scan-private-data.py` revisa archivos versionados antes de publicar.
 
 Consulta [Privacidad](docs/PRIVACY.md).
+
+## Version publica
+
+Este repositorio es un snapshot limpio para portafolio. Incluye datos demo, pruebas y controles de privacidad, pero no contiene la base personal, documentos fiscales, estados de cuenta, fotografias ni credenciales locales.
 
 ## Estado
 
