@@ -40,7 +40,7 @@ Consulta [Arquitectura](docs/ARCHITECTURE.md) para el diseño completo.
 Requisitos: Python 3.12, Node.js y pnpm.
 
 ```bash
-git clone <URL-DEL-REPOSITORIO>
+git clone https://github.com/JLeonardoGG/life-os-personal.git
 cd life-os
 ./scripts/install-local.command
 ```
