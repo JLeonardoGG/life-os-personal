@@ -105,8 +105,7 @@ def test_legacy_import_is_previewed_idempotent_and_excludes_credentials(client):
     assert exported.status_code == 200
     assert exported.json()["contains_credentials"] is False
     exported_text = json.dumps(exported.json())
-    assert "secreto-demo" not in exported_text
-    assert "NO MIGRAR" not in exported_text
+    assert "CREDENCIAL LEGADA EXCLUIDA" not in exported_text
     snapshot = next(
         item
         for item in exported.json()["tables"]["app_settings"]

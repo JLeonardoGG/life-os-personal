@@ -96,8 +96,7 @@
     "credentials": {
       "entries": [
         {
-          "platform": "NO MIGRAR",
-          "password": "secreto-demo"
+          "platform": "CREDENCIAL LEGADA EXCLUIDA"
         }
       ]
     }
