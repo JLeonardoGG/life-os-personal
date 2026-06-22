@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante
+  xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+  xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital"
+  Version="4.0"
+  Fecha="2026-06-20T10:30:00"
+  SubTotal="100.00"
+  Total="116.00"
+  Moneda="MXN"
+  TipoDeComprobante="I"
+  FormaPago="03"
+  MetodoPago="PUE">
+  <cfdi:Emisor Rfc="XAXX010101000" Nombre="DEMO SERVICIOS"/>
+  <cfdi:Receptor Rfc="COSC8001137NA" Nombre="PUBLICO DEMO"/>
+  <cfdi:Conceptos>
+    <cfdi:Concepto Cantidad="1" Descripcion="Servicio de demostracion" ValorUnitario="100.00" Importe="100.00">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="100.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="16.00"/>
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <tfd:TimbreFiscalDigital UUID="11111111-2222-3333-4444-555555555555"/>
+  </cfdi:Complemento>
+</cfdi:Comprobante>

@@ -1,0 +1,19 @@
+{
+  "name": "LifeOS Personal",
+  "short_name": "LifeOS",
+  "description": "Dashboard personal para finanzas, SAT, rutina, pendientes, cuentas y progreso local.",
+  "start_url": "./lifeos_dashboard.html?v=v27-local-backend",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "lifeos-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

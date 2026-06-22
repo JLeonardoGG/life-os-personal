@@ -1,0 +1,68 @@
+# Operating system and editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node tooling
+node_modules/
+.npm/
+.pnpm-store/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Life OS private runtime data
+data/
+uploads/
+backups/
+logs/
+exports/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.log
+
+# Personal and financial source files
+*.xml
+*.zip
+*.pdf
+*.csv
+*.tsv
+*.xls
+*.xlsx
+*.ofx
+*.qfx
+*.jpg
+*.jpeg
+*.png
+*.heic
+
+# Explicitly allow sanitized fixtures and documentation assets
+!demo/**
+!tests/fixtures/**
+!docs/assets/**
+
+# Local launch configuration generated during installation
+local/
+*.local.plist

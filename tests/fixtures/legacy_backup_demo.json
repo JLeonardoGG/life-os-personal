@@ -1,0 +1,106 @@
+{
+  "app": "LifeOS",
+  "version": 3,
+  "exportedAt": "2026-06-21T22:30:00-06:00",
+  "state": {
+    "movements": [
+      {
+        "id": "demo-movement-1",
+        "date": "2026-06-20",
+        "type": "gasto",
+        "category": "Transporte",
+        "name": "Gasolina demo",
+        "amount": 180
+      }
+    ],
+    "finance": {
+      "budgets": {
+        "2026-06": {
+          "incomeTarget": 10000,
+          "expenseLimit": 7000,
+          "savingsTarget": 3000,
+          "categoryLimits": {
+            "Transporte": 1500
+          }
+        }
+      },
+      "subscriptions": [
+        {
+          "id": "demo-sub-1",
+          "name": "Servicio demo",
+          "amount": 99,
+          "day": 5,
+          "frequency": "monthly"
+        }
+      ]
+    },
+    "debtLedger": {
+      "entities": [
+        {
+          "id": "demo-debt",
+          "name": "Banco demo"
+        }
+      ],
+      "transactions": [
+        {
+          "id": "demo-debt-movement",
+          "entityId": "demo-debt",
+          "date": "2026-06-01",
+          "type": "new_debt",
+          "amount": 1000
+        }
+      ]
+    },
+    "investments": [],
+    "todos": [
+      {
+        "id": "demo-task-1",
+        "text": "Pagar servicio demo",
+        "priority": "urgente",
+        "dueDate": "2026-06-25",
+        "done": false
+      }
+    ],
+    "calendar": {
+      "events": []
+    },
+    "routine": [],
+    "fitness": {
+      "gym": [],
+      "cardio": []
+    },
+    "health": {
+      "bodyRecords": []
+    },
+    "wellbeing": {
+      "logs": []
+    },
+    "academic": {
+      "courses": [],
+      "projects": []
+    },
+    "journal": {},
+    "vehicle": {
+      "kmLogs": [],
+      "services": [],
+      "maintenanceLogs": [],
+      "obligations": {}
+    },
+    "uberTax": {
+      "cfdi": [],
+      "retentions": [],
+      "incomes": [],
+      "expenses": [],
+      "invoices": []
+    },
+    "credentials": {
+      "entries": [
+        {
+          "platform": "NO MIGRAR",
+          "password": "secreto-demo"
+        }
+      ]
+    }
+  },
+  "photos": []
+}
